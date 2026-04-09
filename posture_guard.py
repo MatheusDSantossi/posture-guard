@@ -24,12 +24,28 @@ SHOULDER_TILT_THRESHOLD = 15       # degrees — acceptable shoulder level diffe
 FORWARD_LEAN_THRESHOLD = 0.07      # normalized — how far nose is ahead of shoulders
 ALERT_COOLDOWN_SECONDS = 10        # minimum seconds between alerts
  
+NOSE = 0
+LEFT_SHOULDER = 11
+RIGHT_SHOULDER = 12
+ 
+CONNECTIONS = [
+    (11, 12),  # shoulders
+    (11, 13), (13, 15),  # left arm
+    (12, 14), (14, 16),  # right arm
+    (11, 23), (12, 24),  # torso sides
+    (23, 24),            # hips
+]
+ 
 def calculate_angle_from_horizontal(p1, p2):
     """Angle between two points relative to horizontal"""
     dx = p2[0] - p1[0]
     dy = p2[1] - p1[1]
     
-    return abs(np.degrees(np.arctan2(dy, dx)))
+    angle = abs(np.degrees(np.arctan2(dy, dx)))
+    
+    if angle > 90:
+        angle = 180 - angle
+    return angle
 
 def check_posture(landmarks, frame_w, frame_h):
     """landmarks is a list (not .landmark anymore) Returns (is_good: bool, reason: str)."""
@@ -38,10 +54,6 @@ def check_posture(landmarks, frame_w, frame_h):
     def get(idx):
         p = landmarks[idx]
         return p.x * frame_w, p.y * frame_h
-    
-    NOSE = 0
-    LEFT_SHOULDER = 11
-    RIGHT_SHOULDER = 12
     
     nose = get(NOSE)
     l_shoulder = get(LEFT_SHOULDER)
@@ -61,6 +73,30 @@ def check_posture(landmarks, frame_w, frame_h):
     
     return True, "Good posture"
 
+def draw_landmarks(frame, landmarks, frame_w, frame_h):
+    """Draw skeleton and joint dots on the frame."""
+    def pt(idx):
+        p = landmarks[idx]
+        return int(p.x * frame_w), int(p.y * frame_h)
+    
+    for a, b in CONNECTIONS:
+        try:
+            cv2.line(frame, pt(a), pt(b), (245, 66, 230), 2)
+        except IndexError:
+            pass
+        
+    for i in  range(len(landmarks)):
+        try:
+            cv2.line(frame, pt(a), pt(b), (245, 66, 230), 2)
+        except IndexError:
+            pass
+    
+    for i in range(len(landmarks)):
+        try:
+            cv2.circle(frame, pt(i), 4, (245, 117, 66), -1)
+        except IndexError:
+            pass
+
 def draw_status(frame, is_good, reason):
     color = (0, 200, 0) if is_good else (0, 0, 220)
     label = f"{'OK' if is_good else 'FIX'}: {reason}"
@@ -76,47 +112,46 @@ def main():
     last_alert_time = 0
     print("PostureGuard running. Press Q to quit")
     
-    landmarker = vision.PoseLandmarker.create_from_options(options)
-    
-    while True:
-        ret, frame = cap.read()
-        if not ret:
-            break
-        
-        h, w = frame.shape[:2]
-        rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        
-        mp_image = mp.Image(
-            image_format=mp.ImageFormat.SRGB,
-            data=rgb
-        )
-        
-        timestamp = int(time.time() * 1000)
-        
-        result = landmarker.detect_for_video(mp_image, timestamp)
-        
-        if result.pose_landmarks:
-            landmarks = result.pose_landmarks[0]
+    with vision.PoseLandmarker.create_from_options(options) as landmarker:
+        while True:
+            ret, frame = cap.read()
+            if not ret:
+                break
             
-            is_good, reason = check_posture(landmarks, w, h)
-            draw_status(frame, is_good, reason)
+            h, w = frame.shape[:2]
+            rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            mp_image = mp.Image(
+                image_format=mp.ImageFormat.SRGB,
+                data=rgb
+            )
+            timestamp = int(time.time() * 1000)
             
-            now = time.time()
+            result = landmarker.detect_for_video(mp_image, timestamp)
             
-            if not is_good and (now - last_alert_time) > ALERT_COOLDOWN_SECONDS:
-                print(f"[ALERT] {reason}")
+            if result.pose_landmarks:
+                landmarks = result.pose_landmarks[0]
+                draw_landmarks(frame, landmarks, w, h)
                 
-        else:
-            cv2.putText(frame, "No person detected", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (180, 180, 0), 2)
+                is_good, reason = check_posture(landmarks, w, h)
+                draw_status(frame, is_good, reason)
+                draw_status(frame, is_good, reason)
+                
+                now = time.time()
+                
+                if not is_good and (now - last_alert_time) > ALERT_COOLDOWN_SECONDS:
+                    print(f"[ALERT] {reason}")
+                    last_alert_time = now # reset cooldown
+                    
+            else:
+                cv2.rectangle(frame, (0, 0), (w, 40), (0, 0, 0), -1)
+                cv2.putText(frame, "No person detected", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (180, 180, 0), 2)
+                
+            cv2.imshow("PostureGuard", frame)
             
-        cv2.imshow("PostureGuard", frame)
-        
-        if cv2.waitKey(1) & 0xFF == ord("q"):
-            break
+            if cv2.waitKey(1) & 0xFF == ord("q"):
+                break
     cap.release()
     cv2.destroyAllWindows()
-                
-    
     print("PostureGuard stopped.")
     
 if __name__ == "__main__":
