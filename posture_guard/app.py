@@ -48,6 +48,7 @@ def main():
     state = {"running": True, "paused": False, "recalibrate": False}
     tray  = TrayIcon(state)
     tray.start()
+    start_time = time.monotonic()
     
     print("PostureGuard starting. Set DEBUG=1 to show camera window.")
 
@@ -87,7 +88,8 @@ def main():
             h, w = frame.shape[:2]
             rgb    = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             mp_img = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb)
-            result = landmarker.detect_for_video(mp_img, int(time.time() * 1000))
+            timestamp_ms = int((time.monotonic() - start_time) * 1000)
+            result = landmarker.detect_for_video(mp_img, timestamp_ms)
             now    = time.time()
 
             if result.pose_landmarks:
