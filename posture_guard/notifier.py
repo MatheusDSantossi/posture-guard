@@ -10,28 +10,21 @@ def notify(title: str, message: str, tray=None):
     """Send a native OS notification."""
     os_name = platform.system()
  
-    toast = Notification(
-        app_id="PostureGuard",
-        title=title,
-        msg=message,
-    )
-    toast.set_audio(audio.Default, loop=False)
-    toast.show()
-    print(f"[NOTIFY] {title}: {message}")
- 
-    # if os_name == "Darwin":
-    #     _notify_macos(title, message)
-    # elif os_name == "Linux":
-    #     _notify_linux(title, message)
-    # elif os_name == "Windows":
-    #     _notify_windows(title, message, tray)
-    # else:
-    # try:
-    #     from win10toast import ToastNotifier
-    #     ToastNotifier().show_toast(title, message, duration=4, threaded=True)
-    #     print(f"[NOTIFY] {title}: {message}")
-    # except Exception as e:
-    #     print(f"[NOTIFY ERROR] {e}")
+    if os_name == "Darwin":
+        _notify_macos(title, message)
+    elif os_name == "Linux":
+        _notify_linux(title, message)
+    elif os_name == "Windows":
+        _notify_windows(title, message, tray)
+    else:
+        toast = Notification(
+            app_id="PostureGuard",
+            title=title,
+            msg=message,
+        )
+        toast.set_audio(audio.Default, loop=False)
+        toast.show()
+        print(f"[NOTIFY] {title}: {message}")
  
 def _notify_macos(title: str, message: str):
     try:
@@ -63,9 +56,12 @@ def _notify_windows(title: str, message: str, tray=None):
             pass
     
     # Fallback: win10toast
-    try: 
-        from win10toast import ToastNotifier
-        ToastNotifier().show_toast(title, message, duration=4, threaded=True)
-    except ImportError:
-        print(f"[NOTIFY] {title}: {message}")
+    toast = Notification(
+        app_id="PostureGuard",
+        title=title,
+        msg=message,
+    )
+    toast.set_audio(audio.Default, loop=False)
+    toast.show()
+    print(f"[NOTIFY] {title}: {message}")
     
