@@ -112,7 +112,7 @@ The version lives in `posture_guard/__init__.py` and `pyproject.toml`. To releas
 1. Bump `__version__` in `__init__.py`
 2. Bump `version` in `pyproject.toml`
 3. Tag the commit: `git tag v0.2.0 && git push --tags`
-****
+
 ## Privacy
 
 No data leaves your machine. No frames are written to disk.
@@ -120,4 +120,3 @@ No data leaves your machine. No frames are written to disk.
 ## License
 
 MIT
-****
