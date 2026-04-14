@@ -3,6 +3,7 @@ Central configuration — all tuneable constants live here.
 Users can override via environment variables.
 """
 import os
+from posture_guard.utils import get_resource_path
 
 def _float(key, default): return float(os.environ.get(key, default))
 
@@ -11,7 +12,7 @@ def _int(key, default): return int(os.environ.get(key, default))
 def _bool(key, default): return os.environ.get(key, str(default)).lower() in ("1", "true")
 
 # Model
-MODEL_PATH = os.environ.get("PG_MODEL_PATH", "pose_landmarker_full.task")
+MODEL_PATH = get_resource_path(os.environ.get("PG_MODEL_PATH", "pose_landmarker_full.task"))
 
 # Detection thresholds (all deltas relative to calibrated baseline)
 SHOULDER_DROP_THRESHOLD   = _float("PG_SHOULDER_DROP",   0.04)

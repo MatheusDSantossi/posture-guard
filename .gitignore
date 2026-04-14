@@ -1,2 +1,10 @@
 .venv/
 .env
+build/
+dist/
+main.spec
+__main__.spec
+__pycache__/
+*.pyc
+*.pyo
+*.pyd

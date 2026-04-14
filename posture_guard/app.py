@@ -9,12 +9,12 @@ import mediapipe as mp
 from mediapipe.tasks.python import vision
 from mediapipe.tasks import python
  
-from . import __version__
-from . import config as cfg
-from .calibration import run_calibration
-from .detector import check_posture, draw_debug_overlay
-from .notifier import notify
-from .tray import TrayIcon
+from posture_guard import __version__
+from posture_guard import config as cfg
+from posture_guard.calibration import run_calibration
+from posture_guard.detector import check_posture, draw_debug_overlay
+from posture_guard.notifier import notify
+from posture_guard.tray import TrayIcon
 
 def _build_landmarker():
     base_options = python.BaseOptions(model_asset_path=cfg.MODEL_PATH)

@@ -1,3 +1,3 @@
-from .app import main
+from posture_guard.app import main
 
 main()
