@@ -65,7 +65,7 @@ All checks are **delta-based against your calibrated baseline**, so body proport
 
 ## Configuration
 
-All thresholds can be tuned via environment variables — no code changes needed:
+All thresholds can be tuned via environment variables, no code changes needed:
 
 | Variable | Default | Description |
 |---|---|---|
@@ -81,6 +81,7 @@ All thresholds can be tuned via environment variables — no code changes needed
 | `DEBUG` | `0` | Set to `1` to show camera + metric overlay |
 
 Example:
+
 ```bash
 PG_BAD_DURATION=3 PG_ALERT_COOLDOWN=60 posture-guard
 ```
@@ -111,7 +112,7 @@ The version lives in `posture_guard/__init__.py` and `pyproject.toml`. To releas
 1. Bump `__version__` in `__init__.py`
 2. Bump `version` in `pyproject.toml`
 3. Tag the commit: `git tag v0.2.0 && git push --tags`
-
+****
 ## Privacy
 
 No data leaves your machine. No frames are written to disk.
