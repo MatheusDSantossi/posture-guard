@@ -24,7 +24,19 @@ def _build_landmarker():
     )
     return vision.PoseLandmarker.create_from_options(options)
 
-# ── Main ───────────────────────────────────────────────────────────────────────
+def _open_camera() -> cv2.VideoCapture:
+    cap = cv2.VideoCapture(0)
+    if not cap.isOpened():
+        print("Error: Cannot open camera.")
+        sys.exit(1)
+        
+    return cap
+
+def _release_camera(cap: cv2.VideoCapture):
+    if cap and cap.isOpened():
+        cap.release()
+
+# ── Main
 def main():
     cap = cv2.VideoCapture(0)
     if not cap.isOpened():
@@ -56,7 +68,14 @@ def main():
                 continue
 
             if state["paused"]:
-                time.sleep(0.2)
+                _release_camera(cap)
+                while state["paused"] and state["running"]: # blocks here until resume
+                    time.sleep(0.2)
+                
+                if state["running"]:
+                    cap = _open_camera() # reopen only if not quitting
+                    bad_start = None
+                    
                 continue
             
             # Capture
@@ -106,7 +125,7 @@ def main():
             time.sleep(cfg.LOOP_SLEEP_SECONDS)
 
     # Cleanup
-    cap.release()
+    _release_camera(cap)
     if cfg.DEBUG:
         cv2.destroyAllWindows()
     tray.stop()

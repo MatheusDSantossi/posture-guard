@@ -43,7 +43,7 @@ class TrayIcon:
             threading.Thread(target=self._icon.run, daemon=True).start()
             
     def stop(self):
-        if self.icon:
+        if self._icon:
             self._icon.stop()
             
     def set_good(self):
