@@ -98,10 +98,13 @@ posture-guard/
 │   ├── detector.py       # posture logic & baseline
 │   ├── calibration.py    # calibration window
 │   ├── notifier.py       # OS notifications
-│   └── tray.py           # system tray icon
+│   ├── tray.py           # system tray icon
+│   └── utils.py          # helper functions
 ├── pyproject.toml
 ├── Makefile
 ├── README.md
+├── PostureGuard.spec
+├── requirements.txt
 └── LICENSE
 ```
 
@@ -111,7 +114,7 @@ The version lives in `posture_guard/__init__.py` and `pyproject.toml`. To releas
 
 1. Bump `__version__` in `__init__.py`
 2. Bump `version` in `pyproject.toml`
-3. Tag the commit: `git tag v0.2.0 && git push --tags`
+3. Tag the commit: `git tag v0.2.1 && git push --tags`
 
 ## Privacy
 
