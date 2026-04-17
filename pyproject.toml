@@ -17,8 +17,8 @@ dependencies = [
 posture-guard = "posture_guard.main:main"
 
 [project.optional-dependencies]
-windows = ["win10toast]
-dev = ["pyinstaller>=6.0]
+windows = ["win10toast"]
+dev = ["pyinstaller>=6.0"]
 
 [tool.setuptools.packages.find]
 where = ["."]

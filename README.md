@@ -14,6 +14,9 @@ pip install -e .
 
 # 3. Run
 posture-guard
+
+# And for direct module execution:
+python -m posture_guard
 ```
 
 On first launch a calibration window appears for ~3 seconds — **sit straight and look forward** — then it closes and runs silently in the background.
