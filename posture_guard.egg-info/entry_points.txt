@@ -1,0 +1,2 @@
+[console_scripts]
+posture-guard = posture_guard.main:main

@@ -44,7 +44,10 @@ def run_calibration(cap, landmarker, state: dict) -> dict:
             state["running"] = False
             break
 
-    cv2.destroyWindow(win)
+    try:
+        cv2.destroyWindow(win)
+    except cv2.error:
+        pass
     baseline = build_baseline(samples) if samples else {}
     print(f"[INFO] Baseline: {baseline}")
     return baseline
