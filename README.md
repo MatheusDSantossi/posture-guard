@@ -1,8 +1,23 @@
 # PostureGuard 🪑
 
-Real-time posture monitoring that runs silently in the background and sends a native OS notification when you slouch. No images or video are saved — frames are processed in memory and discarded immediately.
+Real-time posture monitoring that runs quietly in the background and alerts you when you start slouching.
+No accounts. No recordings. No data leaves your machine.
+
+![demo](gif-or-screenshot)
+
+## 🚀 Download (No setup required)
+
+👉 **[Download for Windows](https://github.com/MatheusDSantossi/posture-guard/releases/tag/v0.2.1)**
+
+- No Python required
+- Runs in the background
+- Takes ~5 seconds to start
+
+> First launch: sit straight and look forward for ~3 seconds during calibration
 
 ## Quick start
+
+> ⚠️ First-time setup requires downloading a small model file (~20MB)
 
 ```bash
 # 1. Download the model file
@@ -53,18 +68,17 @@ make build-app  # produces dist/PostureGuard(.app on macOS)
 - **Windows** — run `dist/PostureGuard.exe`
 - **Linux** — run `dist/PostureGuard`
 
-## What it checks
+## 🧠 What it detects
 
-| Check | What it catches |
-|---|---|
-| Shoulder drop | Shoulders falling lower in frame |
-| Shoulder narrowing | Shoulders pulling inward (classic hunch) |
-| Shoulder tilt | One shoulder higher than the other |
-| Neck gap | Head staying put while shoulders drop |
-| Lateral lean | Head drifting left or right |
-| Head tilt | Head tilting sideways |
+PostureGuard compares your current posture to your calibrated “good posture” baseline:
 
-All checks are **delta-based against your calibrated baseline**, so body proportions and camera angle don't affect accuracy.
+- **Slouching** → shoulders drop
+- **Hunching** → shoulders pull inward
+- **Leaning** → head shifts left/right
+- **Tilting** → uneven shoulders or head angle
+- **Neck strain** → head stays forward while shoulders move
+
+All checks are personalized to you, not based on fixed body proportions.
 
 ## Configuration
 
@@ -111,6 +125,15 @@ posture-guard/
 └── LICENSE
 ```
 
+## 💡 Why I built this
+
+Most posture apps are either intrusive, inaccurate, or send your data to the cloud.
+
+PostureGuard is:
+- local-first
+- privacy-focused
+- actually usable in the background
+
 ## Versioning
 
 The version lives in `posture_guard/__init__.py` and `pyproject.toml`. To release a new version:
@@ -118,6 +141,12 @@ The version lives in `posture_guard/__init__.py` and `pyproject.toml`. To releas
 1. Bump `__version__` in `__init__.py`
 2. Bump `version` in `pyproject.toml`
 3. Tag the commit: `git tag v0.2.1 && git push --tags`
+
+## 🔒 Safety
+
+- 100% local, no internet connection required after setup
+- No data collection
+- Open source (inspect everything in this repo)
 
 ## Privacy
 
