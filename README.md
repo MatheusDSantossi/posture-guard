@@ -3,7 +3,7 @@
 Real-time posture monitoring that runs quietly in the background and alerts you when you start slouching.
 No accounts. No recordings. No data leaves your machine.
 
-![demo](gif-or-screenshot)
+![demo](./posture_guard.gif)
 
 ## 🚀 Download (No setup required)
 
