@@ -1,5 +1,7 @@
 # PostureGuard 🪑
 
+[![Product Hunt](https://img.shields.io/badge/Product%20Hunt-Launch-orange?logo=producthunt&logoColor=white)](https://www.producthunt.com/posts/postureguard)
+
 Real-time posture monitoring that runs quietly in the background and alerts you when you start slouching.
 No accounts. No recordings. No data leaves your machine.
 
