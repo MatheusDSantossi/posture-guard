@@ -1,11 +1,23 @@
 """
 Posture detection logic.
-All checks are delta-based against a calibrated baseline,
-so body proportions and camera angle don't affect accuracy.
+All checks are delta-based against a calibrated baseline.
+Uses a rolling smoothing window to reduce jitter and catch subtle slouches.
 """
 import numpy as np
 import cv2
+from collections import deque
 from . import config as cfg
+from .import settings
+
+# -- Smoothing window
+# Stores the last N frames of raw metric deltas.
+# We report bad posture only when the "averaeg" delta exceeds the threshold, which filters out single-frame noise while still catching sustained slouches.
+_SMOOTH_WINDOW = 8
+_history: deque = deque(maxlen=_SMOOTH_WINDOW)
+
+def reset_history():
+    """Call after recalibration so stale frames don't pollute new baseline."""
+    _history.clear()
 
 # Geometry
 def _angle_from_horizontal(p1, p2) -> float:
@@ -25,21 +37,16 @@ def collect_sample(lm, w, h):
     if _visible(lm, cfg.LEFT_SHOULDER, cfg.RIGHT_SHOULDER):
         ls = pt(lm, cfg.LEFT_SHOULDER, w, h)
         rs = pt(lm, cfg.RIGHT_SHOULDER, w, h)
-        mid_y = (lm[cfg.LEFT_SHOULDER].y + lm[cfg.RIGHT_SHOULDER].y) / 2
-        mid_x = (lm[cfg.LEFT_SHOULDER].x + lm[cfg.RIGHT_SHOULDER].x) / 2
-        width  = abs(lm[cfg.LEFT_SHOULDER].x - lm[cfg.RIGHT_SHOULDER].x)
-        tilt   = _angle_from_horizontal(ls, rs)
-
-        sample["shoulder_mid_y"] = mid_y          # normalized Y of shoulder midpoint
-        sample["shoulder_width"] = width          # normalized X distance between shoulders
-        sample["shoulder_tilt"]  = tilt           # angle
-        sample["lean_offset"]    = lm[cfg.NOSE].x - mid_x
-        sample["neck_y_gap"]     = lm[cfg.NOSE].y - lm[cfg.LEFT_SHOULDER].y  # nose above/below shoulder
-
+        
+        sample["sholder_mid_y"] = (lm[cfg.LEFT_SHOULDER].y + lm[cfg.RIGHT_SHOULDER]) / 2
+        sample["sholder_width"] = abs(lm[cfg.LEFT_SHOULDER].x - lm[cfg.RIGHT_SHOULDER].x)
+        sample["sholder_tilt"] = _angle_from_horizontal(ls, rs)
+        sample["lean_offset"] = lm[cfg.NOSE].x - (lm[cfg.LEFT_SHOULDER].x + lm[cfg.RIGHT_SHOULDER].x) / 2
+        sample["neck_y_gap"]     = lm[cfg.NOSE].y - lm[cfg.LEFT_SHOULDER].y
     if _visible(lm, cfg.LEFT_EAR, cfg.RIGHT_EAR):
-        le = pt(lm, cfg.LEFT_EAR, w, h)
-        re = pt(lm, cfg.RIGHT_EAR, w, h)
-        sample["head_tilt"] = _angle_from_horizontal(le, re)
+        sample["head_tilt"] = _angle_from_horizontal(
+            pt(lm, cfg.LEFT_EAR, w, h), pt(lm, cfg.RIGHT_EAR, w, h)
+        )
 
     return sample
 
@@ -48,56 +55,64 @@ def build_baseline(samples) -> dict:
     keys = {k for s in samples for k in s}
     return {k: float(np.mean([s[k] for s in samples if k in s])) for k in keys}
 
-# Live check
-def check_posture(lm, w, h, baseline):
-    issues = []
-
+def _extract_metrics(lm, w: int, h: int, baseline: dict) -> dict:
+    """Extract raw per-frame delta values for every check."""
+    metrics = {}
+    
     if _visible(lm, cfg.LEFT_SHOULDER, cfg.RIGHT_SHOULDER):
         ls = pt(lm, cfg.LEFT_SHOULDER, w, h)
         rs = pt(lm, cfg.RIGHT_SHOULDER, w, h)
         mid_y = (lm[cfg.LEFT_SHOULDER].y + lm[cfg.RIGHT_SHOULDER].y) / 2
         mid_x = (lm[cfg.LEFT_SHOULDER].x + lm[cfg.RIGHT_SHOULDER].x) / 2
-        width  = abs(lm[cfg.LEFT_SHOULDER].x - lm[cfg.RIGHT_SHOULDER].x)
-        tilt   = _angle_from_horizontal(ls, rs)
-
-        # 1. Shoulders dropped (Y increased = lower in frame for most cameras)
-        drop = mid_y - baseline.get("shoulder_mid_y", mid_y)
-        if drop > cfg.SHOULDER_DROP_THRESHOLD:
-            issues.append(f"Shoulders dropped ({drop:.3f})")
-
-        # 2. Shoulders narrowed = hunching forward
-        width_loss = baseline.get("shoulder_width", width) - width
-        if width_loss > cfg.SHOULDER_WIDTH_THRESHOLD:
-            issues.append(f"Hunching forward — shoulders narrowed ({width_loss:.3f})")
-
-        # 3. Shoulder tilt — one side higher
-        tilt_delta = tilt - baseline.get("shoulder_tilt", 0)
-        if tilt_delta > cfg.SHOULDER_TILT_THRESHOLD:
-            issues.append(f"Shoulders uneven (+{tilt_delta:.1f}°)")
-
-        # 4. Head-to-shoulder gap changed (shoulders dropped away from head)
+        width = abs(lm[cfg.LEFT_SHOULDER].x - lm[cfg.RIGHT_SHOULDER].x)
+        tilt = _angle_from_horizontal(ls, rs)
+        
+        metrics["shoulder_drop"] = mid_y - baseline.get("sholder_mid_y", mid_y)
+        metrics["shoulder_width"] = baseline.get("shoulder_width", width) - width
+        metrics["shoulder_tilt"] = tilt - baseline.get("shoulder_tilt", 0)
+        
         if _visible(lm, cfg.NOSE):
-            neck_gap   = lm[cfg.NOSE].y - lm[cfg.LEFT_SHOULDER].y
-            gap_delta  = neck_gap - baseline.get("neck_y_gap", neck_gap)
-            if gap_delta > cfg.HEAD_RISE_THRESHOLD:
-                issues.append(f"Shoulders dropped from head ({gap_delta:.3f})")
-
-        # 5. Lateral lean
-        if _visible(lm, cfg.NOSE):
-            lean = (lm[cfg.NOSE].x - mid_x) - baseline.get("lean_offset", 0)
-            if abs(lean) > cfg.FORWARD_LEAN_THRESHOLD:
-                issues.append(f"Leaning {'right' if lean > 0 else 'left'} ({abs(lean):.3f})")
-
-    # 6. Head tilt
+            neck_gap = lm[cfg.NOSE].y - lm[cfg.LEFT_SHOULDER].y
+            metrics["neck_gap"] = neck_gap - baseline.get("neck_y_gap", neck_gap)
+            metrics["lean"] = abs((lm[cfg.NOSE].x - mid_x) - baseline.get("lean_offset", 0))
+            
     if _visible(lm, cfg.LEFT_EAR, cfg.RIGHT_EAR):
-        le = pt(lm, cfg.LEFT_EAR, w, h)
-        re = pt(lm, cfg.RIGHT_EAR, w, h)
-        tilt  = _angle_from_horizontal(le, re)
-        delta = tilt - baseline.get("head_tilt", 0)
-        if delta > cfg.HEAD_TILT_THRESHOLD:
-            issues.append(f"Head tilted ({delta:.1f}°)")
+        tilt = _angle_from_horizontal(pt(lm, cfg.LEFT_EAR, w, h), pt(lm, cfg.RIGHT_EAR, w, h))
+        
+        metrics["head_tilt"] = tilt - baseline.get("head_tilt", 0)
+        
+    return metrics
 
-    return (False, " | ".join(issues)) if issues else (True, "Good posture")
+def _smoothed_metrics() -> dict:
+    """Average metrics across the history window."""
+    if not _history:
+        return {}
+    
+    keys = {k for frame in _history for k in frame}
+    
+    return {
+        k: float(np.mean([f[k] for f in _history if k in f])) for k in keys
+    }
+
+# Live check
+def check_posture(lm, w, h, baseline: dict) -> tuple:
+    """
+    Returns (is_good: bool, reason: str).
+    Uses smoothed averages over the last N frames to reduce jitter.
+    Thresholds are scaled by the user's sensitivity setting.
+    """
+    raw = _extract_metrics(lm, w, h, baseline)
+    _history.append(raw)
+    smoothed = _smoothed_metrics()
+    
+    # Apply sensivity multiplier from user settings
+    user_settings = settings.load()
+    mult = settings.SENSIVITY_MULTIPLIERS.get(user_settings.get("sensivity", "medium"), 1.0)
+    
+    issues = []
+    
+    
+
 
 # Debug overlay
 def draw_debug_overlay(frame, lm, w, h, baseline):
