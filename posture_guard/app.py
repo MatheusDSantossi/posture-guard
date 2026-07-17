@@ -16,7 +16,7 @@ from posture_guard.calibration import run_calibration
 from posture_guard.detector import check_posture, draw_debug_overlay, reset_history
 from posture_guard.notifier import notify
 from posture_guard.tray import TrayIcon
-from posture_guard.settings_ui import open_settings
+from posture_guard.ui import settings_ui
 from posture_guard.extreme_alert import trigger as extreme_trigger
 
 
@@ -55,7 +55,7 @@ def main():
         user_settings = new_settings
         print(f"[INFO] Settings reloaded: {new_settings}")
         
-    tray = TrayIcon(state, on_settings=lambda: open_settings(_on_settings_saved))
+    tray = TrayIcon(state, on_settings=lambda: settings_ui.open_settings(_on_settings_saved))
     tray.start()
     
     # Open camera once here, _open_camera() used for all subsequent reopens
