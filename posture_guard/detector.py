@@ -111,8 +111,25 @@ def check_posture(lm, w, h, baseline: dict) -> tuple:
     
     issues = []
     
-    
-
+    if smoothed.get("sholder_drop", 0) > cfg.SHOULDER_DROP_THRESHOLD * mult:
+        issues.append(f"Shoulders dropped ({smoothed['shoulder_drop']:+.3f})")
+        
+    if smoothed.get("shoulder_width", 0) > cfg.SHOULDER_WIDTH_THRESHOLD * mult:
+        issues.append(f"Hunching forward ({smoothed['shoulder_width']:.3f})")
+ 
+    if smoothed.get("shoulder_tilt", 0) > cfg.SHOULDER_TILT_THRESHOLD * mult:
+        issues.append(f"Shoulders uneven ({smoothed['shoulder_tilt']:+.1f}°)")
+ 
+    if smoothed.get("neck_gap", 0) > cfg.HEAD_RISE_THRESHOLD * mult:
+        issues.append(f"Head forward ({smoothed['neck_gap']:+.3f})")
+ 
+    if smoothed.get("lean", 0) > cfg.FORWARD_LEAN_THRESHOLD * mult:
+        issues.append(f"Leaning ({smoothed['lean']:.3f})")
+ 
+    if smoothed.get("head_tilt", 0) > cfg.HEAD_TILT_THRESHOLD * mult:
+        issues.append(f"Head tilted ({smoothed['head_tilt']:+.1f}°)")
+        
+    return (False, " | ".join(issues)) if issues else (True, "Good posture")
 
 # Debug overlay
 def draw_debug_overlay(frame, lm, w, h, baseline):
@@ -120,36 +137,38 @@ def draw_debug_overlay(frame, lm, w, h, baseline):
     if not _visible(lm, cfg.LEFT_SHOULDER, cfg.RIGHT_SHOULDER):
         return
 
-    mid_y  = (lm[cfg.LEFT_SHOULDER].y + lm[cfg.RIGHT_SHOULDER].y) / 2
-    width  = abs(lm[cfg.LEFT_SHOULDER].x - lm[cfg.RIGHT_SHOULDER].x)
-    neck_y = lm[cfg.NOSE].y - lm[cfg.LEFT_SHOULDER].y if _visible(lm, cfg.NOSE) else 0
+    smoothed = _smoothed_metrics()
+    user_settings = settings.load()
+    mult = settings.SENSIVITY_MULTIPLIERS.get(user_settings.get("sensivity", "medium"), 1.0)
 
-    metrics = [
-        (f"shld_drop:  {mid_y - baseline.get('shoulder_mid_y', mid_y):+.3f}",  cfg.SHOULDER_DROP_THRESHOLD),
-        (f"shld_width: {baseline.get('shoulder_width', width) - width:+.3f}",  cfg.SHOULDER_WIDTH_THRESHOLD),
-        (f"neck_gap:   {neck_y - baseline.get('neck_y_gap', neck_y):+.3f}",    cfg.HEAD_RISE_THRESHOLD),
+    metrics_display = [
+        ("shld_drop", smoothed.get("shoulder_drop", 0), cfg.SHOULDER_DROP_THRESHOLD * mult),
+        ("shld_width", smoothed.get("shoulder_width", 0), cfg.SHOULDER_WIDTH_THRESHOLD * mult),
+        ("neck_gap",   smoothed.get("neck_gap",       0), cfg.HEAD_RISE_THRESHOLD      * mult),
+        ("lean",       smoothed.get("lean",           0), cfg.FORWARD_LEAN_THRESHOLD   * mult),
+        ("head_tilt",  smoothed.get("head_tilt",      0), cfg.HEAD_TILT_THRESHOLD      * mult),
     ]
-    for i, (label, threshold) in enumerate(metrics):
-        color = (100, 100, 220) if abs(float(label.split()[-1])) > threshold else (180, 180, 180)
-        cv2.putText(frame, label, (10, h - 20 - i * 22),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.52, (200, 200, 200), 1)
-
-    # Draw skeleton
-    def p(idx):
-        return int(lm[idx].x * w), int(lm[idx].y * h)
     
+    for i, (label, value, threshold) in enumerate(metrics_display):
+        color = (80, 80, 220) if value > threshold else (180, 180, 180)
+        text = f"{label}: {value:+.3f} (> {threshold:.3f})"
+        cv2.putText(frame, text, (10, h - 20 - i * 22), cv2.FONT_HERSHEY_SIMPLEX, 0.48, color, 1)
+        
+    # Skeleton
+    def p(idx):
+        return int(lm[idx].x * w), int(lm
+                                       [idx].y * h)
+        
     for a, b in cfg.SKELETON_CONNECTIONS:
         try:
             if _visible(lm, a, b):
                 cv2.line(frame, p(a), p(b), (245, 66, 230), 2)
-                
         except IndexError:
             pass
-    
     for i in range(len(lm)):
         try:
             if lm[i].visibility >= cfg.VISIBILITY_MIN:
-                cv2.circle(frame, p(i), 4, (245, 117, 66), -1)
-                
+                cv2.cirle(frame, p(i), 4, (245, 117, 66), -1)
         except IndexError:
             pass
+            

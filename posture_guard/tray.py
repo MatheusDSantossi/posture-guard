@@ -11,7 +11,7 @@ try:
 except ImportError:
     HAS_TRAY = False
 
-def _make_icon(color=(0, 180, 0)):
+def _make_icon(color=(0, 180, 0)) -> "Image":
     img = Image.new("RGB", (64, 64), (30, 30, 30))
     ImageDraw.Draw(img).ellipse([8, 8, 56, 56], fill=color)
     return img
@@ -19,23 +19,27 @@ def _make_icon(color=(0, 180, 0)):
 class TrayIcon:
     """Wrapper around pystray.Icon with PostureGuard-specific controls."""
     
-    def __init__(self, state: dict):
+    def __init__(self, state: dict, on_settings=None):
         self._state = state
+        self._on_settings = on_settings
         self._icon = None
         
         if not HAS_TRAY:
             print("[WARN] pystray/Pillow not installed — tray icon disabled.")
             return
+        
+        menu_items = [
+            pystray.MenuItem("Pause / Resume", self._on_pause),
+            pystray.MenuItem("Recalibrate", self._on_recalibrate),
+            pystray.MenuItem("Settings", self._on_open_settings),
+            pystray.MenuItem("Quit", self._on_quit)
+        ]
 
         self._icon = pystray.Icon(
             "PostureGuard",
             _make_icon(),
             "PostureGuard",
-            menu=pystray.Menu(
-                pystray.MenuItem("Pause / Resume", self._on_pause),
-                pystray.MenuItem("Recalibrate",    self._on_recalibrate),
-                pystray.MenuItem("Quit",           self._on_quit),
-            ),
+            menu=pystray.Menu(*menu_items),
         )
         
     def start(self):
@@ -75,6 +79,10 @@ class TrayIcon:
     def _on_recalibrate(self, icon, item):
         self._state["recalibrate"] = True
         print("[INFO] Recalibration requested")
+        
+    def _on_open_settings(self, icon, items):
+        if self._on_settings:
+            self._on_settings()
 
     def _on_quit(self, icon, item):
         self._state["running"] = False

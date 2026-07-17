@@ -4,7 +4,6 @@ Falls back to a terminal print if no native method is available.
 """
 import platform
 import subprocess
-from winotify import Notification, audio
  
 def notify(title: str, message: str, tray=None):
     """Send a native OS notification."""
@@ -17,13 +16,6 @@ def notify(title: str, message: str, tray=None):
     elif os_name == "Windows":
         _notify_windows(title, message, tray)
     else:
-        toast = Notification(
-            app_id="PostureGuard",
-            title=title,
-            msg=message,
-        )
-        toast.set_audio(audio.Default, loop=False)
-        toast.show()
         print(f"[NOTIFY] {title}: {message}")
  
 def _notify_macos(title: str, message: str):
@@ -47,7 +39,21 @@ def _notify_linux(title: str, message: str):
         print(f"[NOTIFY] {title}: {message}")
 
 def _notify_windows(title: str, message: str, tray=None):
-    # Prefer pystray bubble (no extra dep)
+    # Try winotify first (best Windows experience)
+    try:
+        from winotify import Notification, audio
+        
+        toast = Notification(
+            app_id="PostureGuard",
+            title=title,
+            msg=message,
+        )
+        toast.set_audio(audio.Default, loop=False)
+        toast.show()
+    except Exception:
+        pass
+    
+    # Fallback: pystray buble
     if tray is not None:
         try:
             tray.notify(message, title)
@@ -55,13 +61,5 @@ def _notify_windows(title: str, message: str, tray=None):
         except Exception:
             pass
     
-    # Fallback: win10toast
-    toast = Notification(
-        app_id="PostureGuard",
-        title=title,
-        msg=message,
-    )
-    toast.set_audio(audio.Default, loop=False)
-    toast.show()
     print(f"[NOTIFY] {title}: {message}")
     
