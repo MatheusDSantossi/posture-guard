@@ -3,7 +3,7 @@ import winsound
 def play_sound():
     try:
         winsound.PlaySound(
-            r"posture_guard\ui\assets\audio\watch-your-posture-keep-those-glutes-tucked-in.wav",
+            r"posture_guard\ui\assets\audio\evolved-into-a-shrimp-cutted.wav",
             winsound.SND_FILENAME | winsound.SND_ASYNC,
         )
         print("Playing...")
