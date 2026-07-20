@@ -38,7 +38,7 @@ def collect_sample(lm, w, h):
         ls = pt(lm, cfg.LEFT_SHOULDER, w, h)
         rs = pt(lm, cfg.RIGHT_SHOULDER, w, h)
         
-        sample["sholder_mid_y"] = (lm[cfg.LEFT_SHOULDER].y + lm[cfg.RIGHT_SHOULDER]) / 2
+        sample["sholder_mid_y"] = (lm[cfg.LEFT_SHOULDER].y + lm[cfg.RIGHT_SHOULDER].y) / 2
         sample["sholder_width"] = abs(lm[cfg.LEFT_SHOULDER].x - lm[cfg.RIGHT_SHOULDER].x)
         sample["sholder_tilt"] = _angle_from_horizontal(ls, rs)
         sample["lean_offset"] = lm[cfg.NOSE].x - (lm[cfg.LEFT_SHOULDER].x + lm[cfg.RIGHT_SHOULDER].x) / 2
@@ -107,7 +107,7 @@ def check_posture(lm, w, h, baseline: dict) -> tuple:
     
     # Apply sensivity multiplier from user settings
     user_settings = settings.load()
-    mult = settings.SENSIVITY_MULTIPLIERS.get(user_settings.get("sensivity", "medium"), 1.0)
+    mult = settings.SENSITIVITY_MULTIPLIERS.get(user_settings.get("sensivity", "medium"), 1.0)
     
     issues = []
     
@@ -139,7 +139,7 @@ def draw_debug_overlay(frame, lm, w, h, baseline):
 
     smoothed = _smoothed_metrics()
     user_settings = settings.load()
-    mult = settings.SENSIVITY_MULTIPLIERS.get(user_settings.get("sensivity", "medium"), 1.0)
+    mult = settings.SENSITIVITY_MULTIPLIERS.get(user_settings.get("sensivity", "medium"), 1.0)
 
     metrics_display = [
         ("shld_drop", smoothed.get("shoulder_drop", 0), cfg.SHOULDER_DROP_THRESHOLD * mult),

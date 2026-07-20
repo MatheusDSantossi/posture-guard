@@ -46,90 +46,86 @@ def main():
     print(f"PostureGuard v{__version__} starting...")
 
     state = {"running": True, "paused": False, "recalibrate": False}
-    
-    # Settings reload callback, called when user saves from the settings window
+
     user_settings = settings.load()
-    
+
     def _on_settings_saved(new_settings):
         nonlocal user_settings
         user_settings = new_settings
         print(f"[INFO] Settings reloaded: {new_settings}")
-        
+
     tray = TrayIcon(state, on_settings=lambda: settings_ui.open_settings(_on_settings_saved))
     tray.start()
-    
-    # Open camera once here, _open_camera() used for all subsequent reopens
+
     cap = _open_camera()
-    
-    print(f"PostureGuard starting. Set DEBUG=1 to show camera window.")
+
+    print(f"PostureGuard v{__version__} starting. Set DEBUG=1 to show camera window.")
 
     with _build_landmarker() as landmarker:
         baseline        = run_calibration(cap, landmarker, state)
         last_alert_time = 0
-        bad_start = None
-        timestamp_ms = 0 # strictly increasing counter for MediaPipe
-        
+        bad_start       = None
+        # calibration already consumed timestamps 0..33*CALIBRATION_FRAMES
+        # on the same landmarker, so start the main loop above that range
+        timestamp_ms    = cfg.CALIBRATION_FRAMES * 33 + 1000
+
         print("PostureGuard running in background.")
         if cfg.DEBUG:
-            print("[DEBUG] Camera window active, press Q to quit.")
+            print("[DEBUG] Camera window active — press Q to quit")
 
         while state["running"]:
-            # Recalibrate
+
+            # ── Recalibrate ────────────────────────────────────────────────
             if state["recalibrate"]:
                 state["recalibrate"] = False
                 if not cap.isOpened():
                     cap = _open_camera()
-                    
                 tray.set_good()
                 reset_history()
-                
-                # Use a fresh landmarker for calibration so its timestamps
-                # Never collide with the main loop's counter
                 with _build_landmarker() as calib_landmarker:
                     baseline = run_calibration(cap, calib_landmarker, state)
-                    
-                bad_start = None
-                timestamp_ms = 0
+                bad_start    = None
                 continue
-            # Pause, release camera while idle
+
+            # ── Pause — release camera while idle ──────────────────────────
             if state["paused"]:
                 _release_camera(cap)
-                while state["paused"] and state["running"]:
+                while state["paused"] and state["running"]:  # block here
                     time.sleep(0.2)
-                    
-                    if state["running"]:
-                        cap = _open_camera()
-                        bad_start = None
-                        reset_history()
+                # ← outside the loop: runs once when resumed or quit
+                if state["running"]:
+                    cap       = _open_camera()
+                    bad_start = None
+                    reset_history()
                 continue
-                
-            # Capture
+
+            # ── Capture ────────────────────────────────────────────────────
             ret, frame = cap.read()
             if not ret:
                 time.sleep(0.05)
                 continue
-            
-            h, w = frame.shape[:2]
-            rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+            h, w   = frame.shape[:2]
+            rgb    = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             mp_img = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb)
-            
+
             timestamp_ms += int(cfg.LOOP_SLEEP_SECONDS * 1000) + 1
             result = landmarker.detect_for_video(mp_img, timestamp_ms)
-            now = time.time()
-            
-            # Reload timing settings each iteration so changes apply immediately
-            user_settings = settings.load()
-            bad_duration = user_settings.get("bad_posture_duration", cfg.BAD_POSTURE_DURATION)
-            alert_cooldown   = user_settings.get("alert_cooldown",       cfg.ALERT_COOLDOWN_SECONDS)
-            extreme_enabled  = user_settings.get("extreme_alert",        False)
-            extreme_sound    = user_settings.get("extreme_sound",        True)
-            extreme_flash    = user_settings.get("extreme_flash",        True)
-            
-            # Detect
+            now    = time.time()
+
+            # Reload settings each frame so changes apply immediately
+            user_settings   = settings.load()
+            bad_duration    = user_settings.get("bad_posture_duration", cfg.BAD_POSTURE_DURATION)
+            alert_cooldown  = user_settings.get("alert_cooldown",       cfg.ALERT_COOLDOWN_SECONDS)
+            extreme_enabled = user_settings.get("extreme_alert",        False)
+            extreme_sound   = user_settings.get("extreme_sound",        True)
+            extreme_flash   = user_settings.get("extreme_flash",        True)
+
+            # ── Detect ─────────────────────────────────────────────────────
             if result.pose_landmarks:
                 lm = result.pose_landmarks[0]
                 is_good, reason = check_posture(lm, w, h, baseline)
-                
+
                 if not is_good:
                     tray.set_bad()
                     if bad_start is None:
@@ -149,28 +145,25 @@ def main():
                     draw_debug_overlay(frame, lm, w, h, baseline)
                     color = (0, 200, 0) if is_good else (0, 0, 220)
                     cv2.rectangle(frame, (0, 0), (w, 40), (0, 0, 0), -1)
-                    cv2.putText(frame, f"{'OK' if is_good else 'FIX'}: {reason}", (8, 28), cv2.FONT_HERSHEY_SIMPLEX, 0.62, color, 2)
-                    
+                    cv2.putText(frame, f"{'OK' if is_good else 'FIX'}: {reason}",
+                                (8, 28), cv2.FONT_HERSHEY_SIMPLEX, 0.62, color, 2)
             else:
                 bad_start = None
-            
+
             if cfg.DEBUG:
                 cv2.imshow("PostureGuard [DEBUG]", frame)
                 if cv2.waitKey(1) & 0xFF == ord("q"):
                     break
-                
+
             time.sleep(cfg.LOOP_SLEEP_SECONDS)
-    # Cleanup
+
+    # ── Cleanup ────────────────────────────────────────────────────────────────
     _release_camera(cap)
-    
     if cfg.DEBUG:
         cv2.destroyAllWindows()
-        
     tray.stop()
     print("PostureGuard stopped.")
-            
 
 
 if __name__ == "__main__":
     main()
-    

@@ -51,7 +51,7 @@ def run_calibration(cap, landmarker, state: dict) -> dict:
     return baseline
 
 def _draw_calibration(frame, w: int, h: int, collected: int):
-    overlay = frame.copty()
+    overlay = frame.copy()
     cv2.rectangle(overlay, (0, 0), (w, h), (0, 0, 0), -1)
     cv2.addWeighted(overlay, 0.55, frame, 0.45, 0, frame)
     

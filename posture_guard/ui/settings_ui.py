@@ -21,7 +21,7 @@ def _run_window(on_save=None):
     root.configure(bg="#1e1e1e")
     
     style = ttk.Style(root)
-    style.theme_user("clam")
+    style.theme_use("clam")
     style.configure("TLabel", bakground="#1e1e1e", foreground="#ffffff", font=("Segoe UI", 10))
     style.configure("TFrame", backgrond="#1e1e1e", foreground="#ffffff", font=("Segoe UI", 10))
     style.configure("TCheckbutton", bakground="#1e1e1e", foreground="#ffffff", font=("Segoe UI", 10))
@@ -31,7 +31,7 @@ def _run_window(on_save=None):
     pad = {"padx": 20, "pady": 6}
     
     # Header
-    ttk.label(root, text="PostureGuard Settings", style="Header.TLabel").pack(anchor="w", **pad)
+    ttk.Label(root, text="PostureGuard Settings", style="Header.TLabel").pack(anchor="w", **pad)
     ttk.Separator(root, orient="horizontal").pack(fill="x", padx=20, pady=4)
     
     frame = ttk.Frame(root)
@@ -66,7 +66,7 @@ def _run_window(on_save=None):
     
     # Sensitivity
     ttk.Label(frame, text="Detection sensivity").grid(row=2, column=0, sticky="w", pady=8)
-    sensitivity_var = tk.StringVar(value=current["sensivity"])
+    sensitivity_var = tk.StringVar(value=current["sensitivity"])
     sens_frame = ttk.Frame(frame)
     sens_frame.grid(row=2, column=1, columnspan=2, sticky="w")
     for val, label in [("low", "low"), ("medium", "medium"), ("high", "high")]:
@@ -127,7 +127,7 @@ def _run_window(on_save=None):
         if on_save:
             on_save(new_settings)
         messagebox.showinfo("PostureGuard", "Settings saved! Changes take effect immediately.")
-        root.destry()
+        root.destroy()
         
     tk.Button(
         root, text="Save Settings", command=_save,
