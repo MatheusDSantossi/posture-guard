@@ -4,7 +4,9 @@ Falls back to a terminal print if no native method is available.
 """
 import platform
 import subprocess
- 
+from posture_guard.playsound import play_sound 
+import threading
+
 def notify(title: str, message: str, tray=None):
     """Send a native OS notification."""
     os_name = platform.system()
@@ -49,6 +51,7 @@ def _notify_windows(title: str, message: str, tray=None):
             msg=message,
         )
         toast.set_audio(audio.Default, loop=False)
+        threading.Thread(target=play_sound, daemon=True).start()
         toast.show()
     except Exception:
         pass
