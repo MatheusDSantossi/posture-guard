@@ -5,6 +5,12 @@ Falls back to a terminal print if no native method is available.
 import platform
 import subprocess
 import threading
+import sys
+import os
+
+_WIN_APP_ID   = "PostureGuard"
+_WIN_REG_KEY  = r"HKCU\SOFTWARE\Classes\AppUserModelId\PostureGuard"
+_registered   = False   # only register once per process
 
 def notify(title: str, message: str, tray=None, play_sound: bool = False):
     """Send a native OS notification."""
@@ -19,33 +25,30 @@ def notify(title: str, message: str, tray=None, play_sound: bool = False):
     else:
         print(f"[NOTIFY] {title}: {message}")
  
-def _notify_macos(title: str, message: str, play_sound: bool):
+#  Windows
+def _ensure_registered():
+    """
+    Write the AppUserModelId registry key so Windows accepts our toasts.
+    Only runs once per process. Uses reg.exe — no extra deps.
+    """
+    global _registered
+    if _registered:
+        return
+    
     try:
         subprocess.run(
-            ["osascript", "-e", f'display notification "{message}" with title "{title}"'], check=False, timeout=5
-        ) 
-        
+            ["reg", "add", _WIN_REG_KEY,
+             "/v", "DisplayName", "/t", "REG_SZ", "/d", "PostureGuard", "/f"], capture_output=True, timeout=5,
+        )
+        _registered = True
+        print("[NOTIFY] App registered for Windows toasts")
     except Exception as e:
-        print(f"[NOTIFY] macOS notification failed: {e}")
-        print(f"[NOTIFY] {title}: {message}")
-
-    if play_sound:
-        _fire_sound()
-
-def _notify_linux(title: str, message: str, play_sound: bool):
-    try:
-        subprocess.run(["notify-send", title, message], check=False, timeout=5)
-    except FileNotFoundError:
-        print(f"[NOTIFY] notify-send not found. Install libnotify-bin.")
-        print(f"[NOTIFY] {title}: {message}")
-    except Exception as e:
-        print(f"[NOTIFY] Linux notification failed: {e}")
-        print(f"[NOTIFY] {title}: {message}")
+        print(f"[NOTIFY] Registry write failed (toasts may not show): {e}")
         
-    if play_sound:
-        _fire_sound()
-
+ 
 def _notify_windows(title: str, message: str, tray=None, play_sound: bool = False):
+    _ensure_registered()
+    shown = False
     
     # Try winotify first (best Windows experience)
     try:
@@ -64,7 +67,6 @@ def _notify_windows(title: str, message: str, tray=None, play_sound: bool = Fals
             '$notifier = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier("PostureGuard")\n'
             '$notifier.Show($toast)\n'
         )
-        shown = False
         
         result = subprocess.run(
             ["powershell", "-NoProfile", "-NonInteractive", "-Command", ps_script], timeout=8, capture_output=True, text=True,
@@ -108,6 +110,32 @@ def _notify_windows(title: str, message: str, tray=None, play_sound: bool = Fals
         print(f"[NOTIFY] {title}: {message}")
     
     # Fallback: pystray buble
+    if play_sound:
+        _fire_sound()
+ 
+def _notify_macos(title: str, message: str, play_sound: bool):
+    try:
+        subprocess.run(
+            ["osascript", "-e", f'display notification "{message}" with title "{title}"'], check=False, timeout=5
+        ) 
+        
+    except Exception as e:
+        print(f"[NOTIFY] macOS notification failed: {e}")
+        print(f"[NOTIFY] {title}: {message}")
+
+    if play_sound:
+        _fire_sound()
+
+def _notify_linux(title: str, message: str, play_sound: bool):
+    try:
+        subprocess.run(["notify-send", title, message], check=False, timeout=5)
+    except FileNotFoundError:
+        print(f"[NOTIFY] notify-send not found. Install libnotify-bin.")
+        print(f"[NOTIFY] {title}: {message}")
+    except Exception as e:
+        print(f"[NOTIFY] Linux notification failed: {e}")
+        print(f"[NOTIFY] {title}: {message}")
+        
     if play_sound:
         _fire_sound()
 
