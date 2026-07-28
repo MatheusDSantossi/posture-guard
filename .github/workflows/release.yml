@@ -14,13 +14,15 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
       - name: Download pose model
         run: |
-          python -c "import urllib.request;
-          urllib.request.urlretrieve('https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/latest/pose_landmarker_full.task', 'pose_landmarker_full.task')"
+          python -c "import urllib.request; urllib.request.urlretrieve('https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/latest/pose_landmarker_full.task', 'pose_landmarker_full.task')"
 
       - name: Install dependencies
         run: |
@@ -29,9 +31,12 @@ jobs:
           pip install pyinstaller
 
       - name: Build executable
+        run: pyinstaller PostureGuard.spec
+
+      - name: Create release
         uses: softprops/action-gh-release@v2
         with:
           files: dist/PostureGuard.exe
           generate_release_notes: true
         env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
