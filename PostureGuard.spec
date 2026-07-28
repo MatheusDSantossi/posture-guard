@@ -12,6 +12,8 @@ a = Analysis(
     binaries=mp_binaries + cv2_binaries,
     datas=[
         ('pose_landmarker_full.task', '.'),
+        ('posture_guard/ui/assets/audio/evolved-into-a-shrimp-cutted.wav',
+        'posture_guard/ui/assets/audio'),
         *mp_datas,
         *cv2_datas,
     ],
