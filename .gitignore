@@ -9,3 +9,5 @@ __pycache__/
 *.pyo
 *.pyd
 *.mp4
+.vscode
+*posture_guard_settings.json

@@ -7,31 +7,31 @@ on:
 
 jobs:
   build-windows:
-  runs-on: windows-latest
-  permissions:
-    contents: write
+    runs-on: windows-latest
+    permissions:
+      contents: write
 
-  setps:
-    - name: Checkout code
-      uses: actions/setup-python@v5
-      with:
-        python-version: "3.11"
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          python-version: "3.11"
 
-    - name: Download pose model
-      run: |
-        python -c "import urllib.request;
-        urllib.request.urlretrieve('https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/latest/pose_landmarker_full.task', 'pose_landmarker_full.task')"
+      - name: Download pose model
+        run: |
+          python -c "import urllib.request;
+          urllib.request.urlretrieve('https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/latest/pose_landmarker_full.task', 'pose_landmarker_full.task')"
 
-    - name: Install dependencies
-      run: |
-        python -m pip isntall --upgrade pip
-        pip install -e .
-        pip install pyinstaller
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+          pip install pyinstaller
 
-    - name: Build executable
-      run: softprops/action-gh-release@v2
-      with:
-        files: dist/PostureGuard.exe
-        generate_release_notes: true
-      env:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build executable
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/PostureGuard.exe
+          generate_release_notes: true
+        env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

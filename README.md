@@ -9,11 +9,12 @@ No accounts. No recordings. No data leaves your machine.
 
 ## 🚀 Download (No setup required)
 
-👉 **[Download for Windows](https://github.com/MatheusDSantossi/posture-guard/releases/tag/v0.2.1)**
+👉 **[Download for Windows](https://github.com/MatheusDSantossi/posture-guard/releases/tag/v0.3.0)**
 
 - No Python required
 - Runs in the background
 - Takes ~5 seconds to start
+- Configurable extreme alerts (screen flash + sound)
 
 > First launch: sit straight and look forward for ~3 seconds during calibration
 
@@ -55,6 +56,7 @@ Right-click the tray icon (🟢 good / 🔴 bad / 🟡 paused):
 |---|---|
 | Pause / Resume | Temporarily stop monitoring |
 | Recalibrate | Re-run calibration (e.g. after moving your chair) |
+| Settings | Open the configuration window |
 | Quit | Stop the application |
 
 ## Build a standalone app
@@ -72,17 +74,33 @@ make build-app  # produces dist/PostureGuard(.app on macOS)
 
 ## 🧠 What it detects
 
-PostureGuard compares your current posture to your calibrated “good posture” baseline:
+PostureGuard compares your current posture to your calibrated "good posture" baseline:
 
 - **Slouching** → shoulders drop
 - **Hunching** → shoulders pull inward
 - **Leaning** → head shifts left/right
 - **Tilting** → uneven shoulders or head angle
 - **Neck strain** → head stays forward while shoulders move
+- **Forward head (CVA)** → craniovertebral angle analysis detects forward head protrusion
 
 All checks are personalized to you, not based on fixed body proportions.
 
-## Configuration
+## Settings UI
+
+PostureGuard v0.3.0 introduces a **configuration window** accessible from the tray icon menu:
+
+| Setting | Description |
+|---|---|
+| **Notification cooldown** | Minimum seconds between standard alerts (5s–120s) |
+| **Alert after bad posture for** | How long bad posture must be sustained before alerting (0.5s–10s) |
+| **Detection sensitivity** | Low / Medium / High — adjusts all posture thresholds at once |
+| **Extreme alert** | Toggle on/off — enables screen flash + custom alert sound |
+| **Play alert sound** | Play a custom audio file when an extreme alert fires |
+| **Flash screen** | Show a fullscreen red overlay for 400ms on extreme alert |
+
+Settings persist automatically to `posture_guard_settings.json` and apply in real-time — no restart needed.
+
+## Environment Configuration
 
 All thresholds can be tuned via environment variables, no code changes needed:
 
@@ -97,6 +115,7 @@ All thresholds can be tuned via environment variables, no code changes needed:
 | `PG_BAD_DURATION` | `2.0` | Seconds of sustained bad posture before alert |
 | `PG_ALERT_COOLDOWN` | `30.0` | Minimum seconds between alerts |
 | `PG_MODEL_PATH` | `pose_landmarker_full.task` | Path to MediaPipe model |
+| `PG_FORWARD_HEAD` | `4.0` | Head lean forward (degrees) |
 | `DEBUG` | `0` | Set to `1` to show camera + metric overlay |
 
 Example:
@@ -110,20 +129,27 @@ PG_BAD_DURATION=3 PG_ALERT_COOLDOWN=60 posture-guard
 ```
 posture-guard/
 ├── posture_guard/
-│   ├── __init__.py       # version
-│   ├── __main__.py       # python -m posture_guard
-│   ├── main.py           # entry point & main loop
-│   ├── config.py         # all constants (env-overridable)
-│   ├── detector.py       # posture logic & baseline
-│   ├── calibration.py    # calibration window
-│   ├── notifier.py       # OS notifications
-│   ├── tray.py           # system tray icon
-│   └── utils.py          # helper functions
+│   ├── __init__.py           # version
+│   ├── __main__.py           # python -m posture_guard
+│   ├── main.py               # PyInstaller entry point
+│   ├── app.py                # main detection loop
+│   ├── config.py             # all constants (env-overridable)
+│   ├── detector.py           # posture logic & baseline (CVA, smoothing)
+│   ├── calibration.py        # calibration window
+│   ├── notifier.py           # OS notifications (PowerShell, winotify, pystray)
+│   ├── playsound.py          # cross-platform custom sound playback
+│   ├── extreme_alert.py      # screen flash + system sound alerts
+│   ├── settings.py           # persistent user settings (JSON)
+│   ├── tray.py               # system tray icon
+│   ├── utils.py              # helper functions
+│   └── ui/
+│       └── settings_ui.py    # tkinter settings window
 ├── pyproject.toml
 ├── Makefile
 ├── README.md
 ├── PostureGuard.spec
 ├── requirements.txt
+├── posture_guard_settings.json
 └── LICENSE
 ```
 
@@ -132,6 +158,7 @@ posture-guard/
 Most posture apps are either intrusive, inaccurate, or send your data to the cloud.
 
 PostureGuard is:
+
 - local-first
 - privacy-focused
 - actually usable in the background
@@ -142,7 +169,7 @@ The version lives in `posture_guard/__init__.py` and `pyproject.toml`. To releas
 
 1. Bump `__version__` in `__init__.py`
 2. Bump `version` in `pyproject.toml`
-3. Tag the commit: `git tag v0.2.1 && git push --tags`
+3. Tag the commit: `git tag v0.3.0 && git push --tags`
 
 ## 🔒 Safety
 

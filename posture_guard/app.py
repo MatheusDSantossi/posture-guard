@@ -11,10 +11,13 @@ from mediapipe.tasks import python
 
 from posture_guard import __version__
 from posture_guard import config as cfg
+from posture_guard import settings
 from posture_guard.calibration import run_calibration
-from posture_guard.detector import check_posture, draw_debug_overlay
+from posture_guard.detector import check_posture, draw_debug_overlay, reset_history
 from posture_guard.notifier import notify
 from posture_guard.tray import TrayIcon
+from posture_guard.ui import settings_ui
+from posture_guard.extreme_alert import trigger as extreme_trigger
 
 
 def _build_landmarker():
@@ -43,22 +46,28 @@ def main():
     print(f"PostureGuard v{__version__} starting...")
 
     state = {"running": True, "paused": False, "recalibrate": False}
-    tray  = TrayIcon(state)
+
+    user_settings = settings.load()
+
+    def _on_settings_saved(new_settings):
+        nonlocal user_settings
+        user_settings = new_settings
+        print(f"[INFO] Settings reloaded: {new_settings}")
+
+    tray = TrayIcon(state, on_settings=lambda: settings_ui.open_settings(_on_settings_saved))
     tray.start()
 
     cap = _open_camera()
 
-    print("PostureGuard starting. Set DEBUG=1 to show camera window.")
+    print(f"PostureGuard v{__version__} starting. Set DEBUG=1 to show camera window.")
 
     with _build_landmarker() as landmarker:
         baseline        = run_calibration(cap, landmarker, state)
-        
-    with _build_landmarker() as landmarker:
-        # baseline        = run_calibration(cap, landmarker, state)
         last_alert_time = 0
         bad_start       = None
-        start_time = time.monotonic()
-        last_timestamp = -1
+        # calibration already consumed timestamps 0..33*CALIBRATION_FRAMES
+        # on the same landmarker, so start the main loop above that range
+        timestamp_ms    = cfg.CALIBRATION_FRAMES * 33 + 1000
 
         print("PostureGuard running in background.")
         if cfg.DEBUG:
@@ -72,30 +81,22 @@ def main():
                 if not cap.isOpened():
                     cap = _open_camera()
                 tray.set_good()
-                # Destroy current landmarker
-                landmarker.close()
-
-                # Create a fresh one JUST for calibration
+                reset_history()
                 with _build_landmarker() as calib_landmarker:
                     baseline = run_calibration(cap, calib_landmarker, state)
-
-                # Create a fresh one for main loop again
-                landmarker = _build_landmarker()
-
-                # Reset timestamp timeline
-                start_time = time.monotonic()
-                last_timestamp = -1
-                bad_start = None
+                bad_start    = None
                 continue
 
             # ── Pause — release camera while idle ──────────────────────────
             if state["paused"]:
                 _release_camera(cap)
-                while state["paused"] and state["running"]:
+                while state["paused"] and state["running"]:  # block here
                     time.sleep(0.2)
+                # ← outside the loop: runs once when resumed or quit
                 if state["running"]:
                     cap       = _open_camera()
                     bad_start = None
+                    reset_history()
                 continue
 
             # ── Capture ────────────────────────────────────────────────────
@@ -104,16 +105,21 @@ def main():
                 time.sleep(0.05)
                 continue
 
-            h, w = frame.shape[:2]
+            h, w   = frame.shape[:2]
             rgb    = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             mp_img = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb)
 
-            current_ts = int((time.monotonic() - start_time) * 1000)
-            timestamp_ms = max(current_ts, last_timestamp + 1)
-            last_timestamp = timestamp_ms
-          
+            timestamp_ms += int(cfg.LOOP_SLEEP_SECONDS * 1000) + 1
             result = landmarker.detect_for_video(mp_img, timestamp_ms)
             now    = time.time()
+
+            # Reload settings each frame so changes apply immediately
+            user_settings   = settings.load()
+            bad_duration    = user_settings.get("bad_posture_duration", cfg.BAD_POSTURE_DURATION)
+            alert_cooldown  = user_settings.get("alert_cooldown",       cfg.ALERT_COOLDOWN_SECONDS)
+            extreme_enabled = user_settings.get("extreme_alert",        False)
+            extreme_sound   = user_settings.get("extreme_sound",        True)
+            extreme_flash   = user_settings.get("extreme_flash",        True)
 
             # ── Detect ─────────────────────────────────────────────────────
             if result.pose_landmarks:
@@ -124,11 +130,13 @@ def main():
                     tray.set_bad()
                     if bad_start is None:
                         bad_start = now
-                    elif (now - bad_start) >= cfg.BAD_POSTURE_DURATION:
-                        if (now - last_alert_time) >= cfg.ALERT_COOLDOWN_SECONDS:
-                            notify("PostureGuard ⚠️", reason, tray=tray._icon)
+                    elif (now - bad_start) >= bad_duration:
+                        if (now - last_alert_time) >= alert_cooldown:
+                            notify("PostureGuard ⚠️", reason, tray=tray._icon, play_sound=extreme_enabled and extreme_sound)
                             print(f"[ALERT] {reason}")
                             last_alert_time = now
+                            if extreme_flash:
+                                extreme_trigger(sound=False, flash=True)
                 else:
                     tray.set_good()
                     bad_start = None
@@ -159,4 +167,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    
