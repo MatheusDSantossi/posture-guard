@@ -97,6 +97,7 @@ All thresholds can be tuned via environment variables, no code changes needed:
 | `PG_BAD_DURATION` | `2.0` | Seconds of sustained bad posture before alert |
 | `PG_ALERT_COOLDOWN` | `30.0` | Minimum seconds between alerts |
 | `PG_MODEL_PATH` | `pose_landmarker_full.task` | Path to MediaPipe model |
+| `PG_FORWARD_HEAD` | `4.0` | Head lean forward (degrees) |
 | `DEBUG` | `0` | Set to `1` to show camera + metric overlay |
 
 Example:
@@ -132,6 +133,7 @@ posture-guard/
 Most posture apps are either intrusive, inaccurate, or send your data to the cloud.
 
 PostureGuard is:
+
 - local-first
 - privacy-focused
 - actually usable in the background

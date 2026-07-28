@@ -113,9 +113,9 @@ def check_posture(lm, w, h, baseline: dict) -> tuple:
     _history.append(raw)
     smoothed = _smoothed_metrics()
     
-    # Apply sensivity multiplier from user settings
+    # Apply sensitivity multiplier from user settings
     user_settings = settings.load()
-    mult = settings.SENSITIVITY_MULTIPLIERS.get(user_settings.get("sensivity", "medium"), 1.0)
+    mult = settings.SENSITIVITY_MULTIPLIERS.get(user_settings.get("sensitivity", "medium"), 1.0)
     
     issues = []
     
