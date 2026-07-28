@@ -22,6 +22,7 @@ HEAD_RISE_THRESHOLD       = _float("PG_HEAD_RISE",        0.05)
 FORWARD_LEAN_THRESHOLD    = _float("PG_FORWARD_LEAN",     0.04)
 HEAD_TILT_THRESHOLD       = _float("PG_HEAD_TILT",        10.0)
 VISIBILITY_MIN            = _float("PG_VISIBILITY_MIN",   0.5)
+FORWARD_HEAD_THRESHOLD    = _float("PG_FORWARD_HEAD",     4.0)
 
 # Timing
 BAD_POSTURE_DURATION      = _float("PG_BAD_DURATION",    2.0)   # seconds sustained before alert

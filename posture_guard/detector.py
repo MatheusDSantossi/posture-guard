@@ -38,11 +38,15 @@ def collect_sample(lm, w, h):
         ls = pt(lm, cfg.LEFT_SHOULDER, w, h)
         rs = pt(lm, cfg.RIGHT_SHOULDER, w, h)
         
-        sample["sholder_mid_y"] = (lm[cfg.LEFT_SHOULDER].y + lm[cfg.RIGHT_SHOULDER].y) / 2
-        sample["sholder_width"] = abs(lm[cfg.LEFT_SHOULDER].x - lm[cfg.RIGHT_SHOULDER].x)
-        sample["sholder_tilt"] = _angle_from_horizontal(ls, rs)
+        sample["shoulder_mid_y"] = (lm[cfg.LEFT_SHOULDER].y + lm[cfg.RIGHT_SHOULDER].y) / 2
+        sample["shoulder_width"] = abs(lm[cfg.LEFT_SHOULDER].x - lm[cfg.RIGHT_SHOULDER].x)
+        sample["shoulder_tilt"] = _angle_from_horizontal(ls, rs)
         sample["lean_offset"] = lm[cfg.NOSE].x - (lm[cfg.LEFT_SHOULDER].x + lm[cfg.RIGHT_SHOULDER].x) / 2
         sample["neck_y_gap"]     = lm[cfg.NOSE].y - lm[cfg.LEFT_SHOULDER].y
+        ear_mid = pt_mid(lm, cfg.LEFT_EAR, cfg.RIGHT_EAR, w, h)
+        shoulder_mid = pt_mid(lm, cfg.LEFT_SHOULDER, cfg.RIGHT_SHOULDER, w, h)
+        sample["cva"] = _angle_from_horizontal(shoulder_mid, ear_mid)
+        
     if _visible(lm, cfg.LEFT_EAR, cfg.RIGHT_EAR):
         sample["head_tilt"] = _angle_from_horizontal(
             pt(lm, cfg.LEFT_EAR, w, h), pt(lm, cfg.RIGHT_EAR, w, h)
@@ -67,7 +71,7 @@ def _extract_metrics(lm, w: int, h: int, baseline: dict) -> dict:
         width = abs(lm[cfg.LEFT_SHOULDER].x - lm[cfg.RIGHT_SHOULDER].x)
         tilt = _angle_from_horizontal(ls, rs)
         
-        metrics["shoulder_drop"] = mid_y - baseline.get("sholder_mid_y", mid_y)
+        metrics["shoulder_drop"] = mid_y - baseline.get("shoulder_mid_y", mid_y)
         metrics["shoulder_width"] = baseline.get("shoulder_width", width) - width
         metrics["shoulder_tilt"] = tilt - baseline.get("shoulder_tilt", 0)
         
@@ -78,6 +82,10 @@ def _extract_metrics(lm, w: int, h: int, baseline: dict) -> dict:
             
     if _visible(lm, cfg.LEFT_EAR, cfg.RIGHT_EAR):
         tilt = _angle_from_horizontal(pt(lm, cfg.LEFT_EAR, w, h), pt(lm, cfg.RIGHT_EAR, w, h))
+        ear_mid = pt_mid(lm, cfg.LEFT_EAR, cfg.RIGHT_EAR, w, h)
+        shoulder_mid_px = (mid_x * w, mid_y * h)
+        cva = _angle_from_horizontal(shoulder_mid_px, ear_mid)
+        metrics["forward_head"] = baseline.get("cva", cva) - cva # positive = head moved forward
         
         metrics["head_tilt"] = tilt - baseline.get("head_tilt", 0)
         
@@ -111,7 +119,7 @@ def check_posture(lm, w, h, baseline: dict) -> tuple:
     
     issues = []
     
-    if smoothed.get("sholder_drop", 0) > cfg.SHOULDER_DROP_THRESHOLD * mult:
+    if smoothed.get("shoulder_drop", 0) > cfg.SHOULDER_DROP_THRESHOLD * mult:
         issues.append(f"Shoulders dropped ({smoothed['shoulder_drop']:+.3f})")
         
     if smoothed.get("shoulder_width", 0) > cfg.SHOULDER_WIDTH_THRESHOLD * mult:
@@ -128,6 +136,9 @@ def check_posture(lm, w, h, baseline: dict) -> tuple:
  
     if smoothed.get("head_tilt", 0) > cfg.HEAD_TILT_THRESHOLD * mult:
         issues.append(f"Head tilted ({smoothed['head_tilt']:+.1f}°)")
+        
+    if smoothed.get("forward_head", 0) > cfg.FORWARD_HEAD_THRESHOLD  * mult:
+        issues.append(f"Head pushed forward ({smoothed['forward_head']:+.1f}°)")
         
     return (False, " | ".join(issues)) if issues else (True, "Good posture")
 
@@ -168,7 +179,10 @@ def draw_debug_overlay(frame, lm, w, h, baseline):
     for i in range(len(lm)):
         try:
             if lm[i].visibility >= cfg.VISIBILITY_MIN:
-                cv2.cirle(frame, p(i), 4, (245, 117, 66), -1)
+                cv2.circle(frame, p(i), 4, (245, 117, 66), -1)
         except IndexError:
             pass
             
+# helper
+def pt_mid(lm, i1, i2, w, h):
+    return ((lm[i1].x + lm[i2].x) / 2 * w, (lm[i1].y + lm[i2].y) / 2 * h) 

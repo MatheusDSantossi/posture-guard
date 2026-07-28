@@ -141,7 +141,8 @@ def main():
                     tray.set_good()
                     bad_start = None
 
-                if cfg.DEBUG:
+                if True:
+                # if cfg.DEBUG:
                     draw_debug_overlay(frame, lm, w, h, baseline)
                     color = (0, 200, 0) if is_good else (0, 0, 220)
                     cv2.rectangle(frame, (0, 0), (w, 40), (0, 0, 0), -1)
