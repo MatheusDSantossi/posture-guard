@@ -9,7 +9,7 @@ No accounts. No recordings. No data leaves your machine.
 
 ## 🚀 Download (No setup required)
 
-👉 **[Download for Windows](https://github.com/MatheusDSantossi/posture-guard/releases/tag/v0.3.0)**
+👉 **[Download for Windows](https://github.com/MatheusDSantossi/posture-guard/releases/tag/v0.3.1)**
 
 - No Python required
 - Runs in the background
@@ -87,7 +87,7 @@ All checks are personalized to you, not based on fixed body proportions.
 
 ## Settings UI
 
-PostureGuard v0.3.0 introduces a **configuration window** accessible from the tray icon menu:
+PostureGuard v0.3.1 introduces a **configuration window** accessible from the tray icon menu:
 
 | Setting | Description |
 |---|---|
@@ -169,7 +169,7 @@ The version lives in `posture_guard/__init__.py` and `pyproject.toml`. To releas
 
 1. Bump `__version__` in `__init__.py`
 2. Bump `version` in `pyproject.toml`
-3. Tag the commit: `git tag v0.3.0 && git push --tags`
+3. Tag the commit: `git tag v0.3.1 && git push --tags`
 
 ## 🔒 Safety
 
