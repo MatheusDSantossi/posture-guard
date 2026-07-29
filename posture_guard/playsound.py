@@ -2,9 +2,11 @@
 """
 Cross-platform sound playback.
 Resolves the asset path whether running from source or a PyInstaller bundle.
+Randomly picks one audio file from the assets/audio folder to play as the alert.
 """
 import os
 import sys
+import random
 import platform
 
 def _get_sound_path() -> str:
@@ -15,14 +17,28 @@ def _get_sound_path() -> str:
     
     # posture_guard\ui\assets\audio\evolved-into-a-shrimp-cutted.wav
         
-    return os.path.join(base, "posture_guard", "ui", "assets", "audio", "evolved-into-a-shrimp-cutted.wav")
+    return os.path.join(base, "posture_guard", "ui", "assets", "audio")
+
+def _pick_random_sound(audio_dir: str) -> str | None:
+    
+    if not os.path.isdir(audio_dir):
+        return None
+    
+    exts = (".wav",) # winsound only supports WAV
+    files = [f for f in os.listdir(audio_dir) if f.lower().endswith(exts)]
+    
+    if not files:
+        return None
+    return os.path.join(audio_dir, random.choice(files))
 
 def play_sound():
     
-    path = _get_sound_path()
+    audio_dir = _get_sound_path()
+    path = _pick_random_sound(audio_dir)
     
-    if not os.path.exists(path):
-        print(f"[WARN] Sound file not found: {path}")
+    if not path:
+        print(f"[WARN] No sound files found: {audio_dir}")
+        return
         
     try:
         os_name = platform.system()
