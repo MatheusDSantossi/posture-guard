@@ -11,3 +11,8 @@ __pycache__/
 *.mp4
 .vscode
 *posture_guard_settings.json
+
+*.egg-info/
+pose_landmarker_full.task
+.pytest_cache/
+.ruff_cache/
