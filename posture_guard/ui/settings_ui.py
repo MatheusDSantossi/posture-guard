@@ -4,7 +4,7 @@ Opens in a separate thread so it doesn't block the detection loop.
 """
 import threading
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import messagebox
 from posture_guard import settings as s
 
 def open_settings(on_save=None):

@@ -7,7 +7,7 @@ import numpy as np
 import cv2
 from collections import deque
 from . import config as cfg
-from .import settings
+from . import settings
 
 # -- Smoothing window
 # Stores the last N frames of raw metric deltas.
@@ -150,7 +150,7 @@ def draw_debug_overlay(frame, lm, w, h, baseline):
 
     smoothed = _smoothed_metrics()
     user_settings = settings.load()
-    mult = settings.SENSITIVITY_MULTIPLIERS.get(user_settings.get("sensivity", "medium"), 1.0)
+    mult = settings.SENSITIVITY_MULTIPLIERS.get(user_settings.get("sensitivity", "medium"), 1.0)
 
     metrics_display = [
         ("shld_drop", smoothed.get("shoulder_drop", 0), cfg.SHOULDER_DROP_THRESHOLD * mult),

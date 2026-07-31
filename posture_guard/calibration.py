@@ -5,7 +5,6 @@ Uses its own monotonic timestamp counter to stay independent from the main loop.
 """
 import cv2
 import mediapipe as mp
-import time
 
 from . import config as cfg
 from .detector import collect_sample, build_baseline

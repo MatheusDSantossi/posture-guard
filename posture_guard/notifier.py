@@ -5,8 +5,6 @@ Falls back to a terminal print if no native method is available.
 import platform
 import subprocess
 import threading
-import sys
-import os
 
 _WIN_APP_ID   = "PostureGuard"
 _WIN_REG_KEY  = r"HKCU\SOFTWARE\Classes\AppUserModelId\PostureGuard"
@@ -104,7 +102,7 @@ def _notify_windows(title: str, message: str, tray=None, play_sound: bool = Fals
         try:
             tray.notify(message, title)
             shown = True
-        except Exception:
+        except Exception as e:
             print(f"[NOTIFY] pystray fallback failed: {e}")
     
     if not shown:

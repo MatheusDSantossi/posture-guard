@@ -6,7 +6,6 @@ where PyInstaller unpacks data files — we use that to locate the model.
 """
 import sys
 import os
-from pathlib import Path
 
 # when frozen by PyInstaller, data files land in sys._MEIPASS
 if getattr(sys, "frozen", False):

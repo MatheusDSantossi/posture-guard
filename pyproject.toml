@@ -1,6 +1,6 @@
 [project]
 name = "posture-guard"
-version = "0.2.0"
+version = "0.3.3"
 description = "Real-time posture monitoring that runs in the background"
 readme = "README.md"
 license = { file = "LICENSE"}
@@ -20,7 +20,10 @@ posture-guard = "posture_guard.main:main"
 [project.optional-dependencies]
 windows = ["win10toast"]
 dev = ["pyinstaller>=6.0"]
+test = ["pytest>=8.0", "ruff>=0.6.0"]
 
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["posture_guard"]
+
+

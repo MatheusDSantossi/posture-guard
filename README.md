@@ -5,16 +5,28 @@
 Real-time posture monitoring that runs quietly in the background and alerts you when you start slouching.
 No accounts. No recordings. No data leaves your machine.
 
+## What it does
+
+* Calibrates to your baseline posture in a short startup step
+* Runs in the background with tray controls and configurable alerts
+* Uses local processing only, with no frame recording
+
+## Why this repo matters
+
+* Demonstrates computer-vision product engineering
+* Shows desktop-app packaging and release workflow experience
+* Is designed around privacy, usability, and real-world background execution
+
 ![demo](./posture_guard.gif)
 
 ## 🚀 Download (No setup required)
 
-👉 **[Download for Windows](https://github.com/MatheusDSantossi/posture-guard/releases/tag/v0.3.1)**
+👉 **[Download for Windows](https://github.com/MatheusDSantossi/posture-guard/releases/latest)**
 
-- No Python required
-- Runs in the background
-- Takes ~5 seconds to start
-- Configurable extreme alerts (screen flash + sound)
+* No Python required
+* Runs in the background
+* Takes ~5 seconds to start
+* Configurable extreme alerts (screen flash + sound)
 
 > First launch: sit straight and look forward for ~3 seconds during calibration
 
@@ -87,7 +99,7 @@ All checks are personalized to you, not based on fixed body proportions.
 
 ## Settings UI
 
-PostureGuard v0.3.1 introduces a **configuration window** accessible from the tray icon menu:
+PostureGuard v0.3.3 introduces a **configuration window** accessible from the tray icon menu:
 
 | Setting | Description |
 |---|---|
@@ -169,7 +181,7 @@ The version lives in `posture_guard/__init__.py` and `pyproject.toml`. To releas
 
 1. Bump `__version__` in `__init__.py`
 2. Bump `version` in `pyproject.toml`
-3. Tag the commit: `git tag v0.3.1 && git push --tags`
+3. Tag the commit: `git tag vX.Y.Z && git push --tags`
 
 ## 🔒 Safety
 
