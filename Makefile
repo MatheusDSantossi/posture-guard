@@ -8,19 +8,13 @@ run:
 debug:
 	DEBUG=1 posture-guard
 
-# Build standalone app (requires: make dev)
+# Build standalone app (requires: make dev, and pose_landmarker_full.task in the project root)
+# Uses the tracked spec, same as the release workflow, so the audio assets are bundled
 build-app:
-	pyinstaller \
-		--name "PostureGuard" \
-		--onefile \
-		--windowed \
-		--add-data "pose_landmarker_full.task:." \
-		posture_guard/main.py
+	pyinstaller PostureGuard.spec
 	@echo ""
 	@echo "✅ App built → dist/PostureGuard"
-	@echo "   macOS: move dist/PostureGuard.app to /Applications"
-	@echo "   Windows/Linux: run dist/PostureGuard directly"
 
-# Housekeeping
+# Housekeeping (PostureGuard.spec is tracked, so it is not removed)
 clean:
-	rm -rf build dist *.spec __pycache__ posture_guard/__pycache__
+	rm -rf build dist __pycache__ posture_guard/__pycache__
