@@ -130,13 +130,15 @@ def main():
                     tray.set_bad()
                     if bad_start is None:
                         bad_start = now
-                    elif (now - bad_start) >= bad_duration:
-                        if (now - last_alert_time) >= alert_cooldown:
-                            notify("PostureGuard ⚠️", reason, tray=tray._icon, play_sound=extreme_enabled and extreme_sound)
-                            print(f"[ALERT] {reason}")
-                            last_alert_time = now
-                            if extreme_flash:
-                                extreme_trigger(sound=False, flash=True)
+                    elif (
+                        (now - bad_start) >= bad_duration
+                        and (now - last_alert_time) >= alert_cooldown
+                    ):
+                        notify("PostureGuard ⚠️", reason, tray=tray._icon, play_sound=extreme_enabled and extreme_sound)
+                        print(f"[ALERT] {reason}")
+                        last_alert_time = now
+                        if extreme_flash:
+                            extreme_trigger(sound=False, flash=True)
                 else:
                     tray.set_good()
                     bad_start = None
