@@ -23,6 +23,14 @@ else:
 os.environ.setdefault("PG_MODEL_PATH", os.path.join(_base, "pose_landmarker_full.task"))
 # os.environ.setdefault("PG_MODEL_PATH", os.path.json(_base, "pose_landmarker_full.task"))
 
-from posture_guard.app import main
+def main():
+    # Imported here so PG_MODEL_PATH above is set before posture_guard.config reads it.
+    # The `posture-guard` console script imports this module and then calls main(),
+    # so nothing may run at import time or the app would start twice.
+    from posture_guard.app import main as run_app
 
-main()
+    run_app()
+
+
+if __name__ == "__main__":
+    main()
