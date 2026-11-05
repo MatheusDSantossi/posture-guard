@@ -55,11 +55,11 @@ def play_sound():
             
         elif os_name == "Darwin":
             import subprocess
-            subprocess.run(["afplay", path], timeout=10)
+            subprocess.run(["afplay", path], timeout=10, check=False)
             
         elif os_name == "Linux":
             import subprocess
-            subprocess.run(["aplay", path], timeout=10, capture_output=True)
+            subprocess.run(["aplay", path], timeout=10, capture_output=True, check=False)
         
     except Exception as e:
         print(f"[WARN] Sound playback failed: {e}")

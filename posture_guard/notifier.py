@@ -36,7 +36,7 @@ def _ensure_registered():
     try:
         subprocess.run(
             ["reg", "add", _WIN_REG_KEY,
-             "/v", "DisplayName", "/t", "REG_SZ", "/d", "PostureGuard", "/f"], capture_output=True, timeout=5,
+             "/v", "DisplayName", "/t", "REG_SZ", "/d", "PostureGuard", "/f"], capture_output=True, timeout=5, check=False,
             creationflags=subprocess.CREATE_NO_WINDOW,
         )
         _registered = True
@@ -68,7 +68,7 @@ def _notify_windows(title: str, message: str, tray=None, play_sound: bool = Fals
         )
         
         result = subprocess.run(
-            ["powershell", "-NoProfile", "-NonInteractive", "-Command", ps_script], timeout=8, capture_output=True, text=True, creationflags=subprocess.CREATE_NO_WINDOW,
+            ["powershell", "-NoProfile", "-NonInteractive", "-Command", ps_script], timeout=8, check=False, capture_output=True, text=True, creationflags=subprocess.CREATE_NO_WINDOW,
         )
         
         if result.returncode == 0:

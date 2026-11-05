@@ -24,14 +24,14 @@ def _play_sound():
             
         elif os_name == "Darwin":
             import subprocess
-            subprocess.run(["afplay", "/System/Library/Sounds/Basso.aiff"], timeout=5)
+            subprocess.run(["afplay", "/System/Library/Sounds/Basso.aiff"], timeout=5, check=False)
             
         elif os_name == "Linux":
             import subprocess
             # Most Linux distros have this; falls back silently if not
             subprocess.run(
                 ["aplay", "/usr/share/sounds/alsa/Front_Left.wav"],
-                timeout=5, capture_output=True,
+                timeout=5, capture_output=True, check=False,
             )
     except Exception as e:
         print(f"[WARN] Sound alert failed: {e}")
