@@ -25,16 +25,24 @@ SENSITIVITY_MULTIPLIERS = {
     "high":   0.6,   # easier to trigger — catches subtle posture changes
 }
 
+_load_warned = False
+
 def load() -> dict:
+    global _load_warned
     if os.path.exists(_SETTINGS_FILE):
         try:
             with open(_SETTINGS_FILE, "r") as f:
                 data = json.load(f)
             # Fill in any missing keys from defaults (handles upgrades)
             return {**DEFAULTS, **data}
-        except Exception:
-            pass
-        
+        # Broad on purpose: any unreadable/corrupt file (OSError, JSONDecodeError,
+        # TypeError from a non-dict payload) must fall back to defaults
+        except Exception as e:  # noqa: BLE001
+            # load() runs every frame, so warn once instead of flooding the log
+            if not _load_warned:
+                print(f"[WARN] Could not read settings, using defaults: {e}")
+                _load_warned = True
+
     return dict(DEFAULTS)
 
 def save(settings: dict): 
