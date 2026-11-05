@@ -1,13 +1,25 @@
 """
-Persistent user settings — saved to a JSON file next to the .exe / in the project root.
+Persistent user settings — saved to a JSON file in the per-user config directory.
 Provides defaults and a clean API to read/write individual keys.
 """
 import json
 import os
+import platform
 
-from posture_guard.utils import get_resource_path
 
-_SETTINGS_FILE = os.path.join(os.path.dirname(get_resource_path(".")), "posture_guard_settings.json")
+def _settings_dir() -> str:
+    """
+    Per-user config directory. Not the bundle directory: in the one-file .exe that
+    is sys._MEIPASS, a temp folder deleted on exit, so settings would never persist.
+    """
+    system = platform.system()
+    if system == "Windows":
+        return os.path.join(os.environ.get("APPDATA") or os.path.expanduser("~"), "PostureGuard")
+    if system == "Darwin":
+        return os.path.expanduser("~/Library/Application Support/PostureGuard")
+    return os.path.join(os.environ.get("XDG_CONFIG_HOME") or os.path.expanduser("~/.config"), "posture-guard")
+
+_SETTINGS_FILE = os.path.join(_settings_dir(), "posture_guard_settings.json")
  
 DEFAULTS = {
     "alert_cooldown":       30,     # seconds between standard notifications
@@ -47,6 +59,7 @@ def load() -> dict:
 
 def save(settings: dict): 
     try:
+        os.makedirs(os.path.dirname(_SETTINGS_FILE), exist_ok=True)
         with open(_SETTINGS_FILE, "w") as f:
             json.dump(settings, f, indent=2)
     # Broad on purpose: a failed save must not crash the settings window

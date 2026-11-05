@@ -112,7 +112,7 @@ The Makefile has shortcuts (`make run`, `make debug`, `make dev`) that use POSIX
 | Play alert sound | on / off | Plays a random `.wav` from `posture_guard/ui/assets/audio/` |
 | Flash screen | on / off | 400 ms full-screen red overlay |
 
-When running from source, settings are saved to `posture_guard_settings.json` in the working directory.
+Settings are saved to `posture_guard_settings.json` in your user config folder: `%APPDATA%\PostureGuard` on Windows, `~/Library/Application Support/PostureGuard` on macOS, and `~/.config/posture-guard` on Linux.
 
 ### Environment variables
 
