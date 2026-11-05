@@ -137,7 +137,7 @@ def main():
                         notify("PostureGuard ⚠️", reason, tray=tray._icon, play_sound=extreme_enabled and extreme_sound)
                         print(f"[ALERT] {reason}")
                         last_alert_time = now
-                        if extreme_flash:
+                        if extreme_enabled and extreme_flash:
                             extreme_trigger(sound=False, flash=True)
                 else:
                     tray.set_good()
