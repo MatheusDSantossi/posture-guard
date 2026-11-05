@@ -49,7 +49,8 @@ def save(settings: dict):
     try:
         with open(_SETTINGS_FILE, "w") as f:
             json.dump(settings, f, indent=2)
-    except Exception as e:
+    # Broad on purpose: a failed save must not crash the settings window
+    except Exception as e:  # noqa: BLE001
         print(f"[WARN] Could not save settings: {e}")
 
 def get(key: str):

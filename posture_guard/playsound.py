@@ -61,5 +61,6 @@ def play_sound():
             import subprocess
             subprocess.run(["aplay", path], timeout=10, capture_output=True, check=False)
         
-    except Exception as e:
+    # Broad on purpose: sound is best-effort; must not crash the sound thread
+    except Exception as e:  # noqa: BLE001
         print(f"[WARN] Sound playback failed: {e}")

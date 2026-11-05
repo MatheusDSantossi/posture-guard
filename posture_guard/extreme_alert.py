@@ -33,7 +33,8 @@ def _play_sound():
                 ["aplay", "/usr/share/sounds/alsa/Front_Left.wav"],
                 timeout=5, capture_output=True, check=False,
             )
-    except Exception as e:
+    # Broad on purpose: sound is best-effort; must not crash the alert thread
+    except Exception as e:  # noqa: BLE001
         print(f"[WARN] Sound alert failed: {e}")
 
 def _flash_screen():
@@ -52,5 +53,6 @@ def _flash_screen():
         root.after(400, root.destroy)
         root.mainloop()
         
-    except Exception as e:
+    # Broad on purpose: tkinter can fail in many ways (no display, Tcl errors); flash is best-effort
+    except Exception as e:  # noqa: BLE001
         print(f"[WARN] Flash alert failed: {e}")        
