@@ -4,7 +4,7 @@ version = "0.3.3"
 description = "Real-time posture monitoring that runs in the background"
 readme = "README.md"
 license = { file = "LICENSE"}
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dependencies = [
     "opencv-python>=4.8.0",
     "mediapipe>=0.10.0",
