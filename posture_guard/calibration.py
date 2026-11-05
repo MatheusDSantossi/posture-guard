@@ -7,7 +7,8 @@ import cv2
 import mediapipe as mp
 
 from . import config as cfg
-from .detector import collect_sample, build_baseline
+from .detector import build_baseline, collect_sample
+
 
 def run_calibration(cap, landmarker, state: dict) -> dict:
     samples = []

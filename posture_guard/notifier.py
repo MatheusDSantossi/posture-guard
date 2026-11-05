@@ -36,12 +36,13 @@ def _ensure_registered():
     try:
         subprocess.run(
             ["reg", "add", _WIN_REG_KEY,
-             "/v", "DisplayName", "/t", "REG_SZ", "/d", "PostureGuard", "/f"], capture_output=True, timeout=5,
+             "/v", "DisplayName", "/t", "REG_SZ", "/d", "PostureGuard", "/f"], capture_output=True, timeout=5, check=False,
             creationflags=subprocess.CREATE_NO_WINDOW,
         )
         _registered = True
         print("[NOTIFY] App registered for Windows toasts")
-    except Exception as e:
+    # Broad on purpose: registry write is best-effort; toasts may still work without it
+    except Exception as e:  # noqa: BLE001
         print(f"[NOTIFY] Registry write failed (toasts may not show): {e}")
         
  
@@ -68,7 +69,7 @@ def _notify_windows(title: str, message: str, tray=None, play_sound: bool = Fals
         )
         
         result = subprocess.run(
-            ["powershell", "-NoProfile", "-NonInteractive", "-Command", ps_script], timeout=8, capture_output=True, text=True, creationflags=subprocess.CREATE_NO_WINDOW,
+            ["powershell", "-NoProfile", "-NonInteractive", "-Command", ps_script], timeout=8, check=False, capture_output=True, text=True, creationflags=subprocess.CREATE_NO_WINDOW,
         )
         
         if result.returncode == 0:
@@ -77,7 +78,8 @@ def _notify_windows(title: str, message: str, tray=None, play_sound: bool = Fals
         else:
             print(f"[NOTIFY] PowerShell toast failed (rc={result.returncode}): {result.stderr.strip()}")
             
-    except Exception as e:
+    # Broad on purpose: any failure must fall through to the next notification fallback
+    except Exception as e:  # noqa: BLE001
         print(f"[NOTIFY] PowerShell toast failed: {e}")
         
     # Fallback: winotify
@@ -94,7 +96,8 @@ def _notify_windows(title: str, message: str, tray=None, play_sound: bool = Fals
             toast.set_audio(audio.Silent, loop=False)
             toast.show()
             shown = True
-        except Exception as e:
+        # Broad on purpose: any failure must fall through to the next notification fallback
+        except Exception as e:  # noqa: BLE001
             print(f"[NOTIFY] winotify failed: {e}")
             
     # Fallback: pystray bubble
@@ -102,7 +105,8 @@ def _notify_windows(title: str, message: str, tray=None, play_sound: bool = Fals
         try:
             tray.notify(message, title)
             shown = True
-        except Exception as e:
+        # Broad on purpose: any failure must fall through to the final print fallback
+        except Exception as e:  # noqa: BLE001
             print(f"[NOTIFY] pystray fallback failed: {e}")
     
     if not shown:
@@ -118,7 +122,8 @@ def _notify_macos(title: str, message: str, play_sound: bool):
             ["osascript", "-e", f'display notification "{message}" with title "{title}"'], check=False, timeout=5
         ) 
         
-    except Exception as e:
+    # Broad on purpose: a failed notification must not crash the detection loop
+    except Exception as e:  # noqa: BLE001
         print(f"[NOTIFY] macOS notification failed: {e}")
         print(f"[NOTIFY] {title}: {message}")
 
@@ -129,9 +134,10 @@ def _notify_linux(title: str, message: str, play_sound: bool):
     try:
         subprocess.run(["notify-send", title, message], check=False, timeout=5)
     except FileNotFoundError:
-        print(f"[NOTIFY] notify-send not found. Install libnotify-bin.")
+        print("[NOTIFY] notify-send not found. Install libnotify-bin.")
         print(f"[NOTIFY] {title}: {message}")
-    except Exception as e:
+    # Broad on purpose: a failed notification must not crash the detection loop
+    except Exception as e:  # noqa: BLE001
         print(f"[NOTIFY] Linux notification failed: {e}")
         print(f"[NOTIFY] {title}: {message}")
         

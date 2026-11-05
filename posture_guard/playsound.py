@@ -5,9 +5,10 @@ Resolves the asset path whether running from source or a PyInstaller bundle.
 Randomly picks one audio file from the assets/audio folder to play as the alert.
 """
 import os
-import sys
-import random
 import platform
+import random
+import sys
+
 
 def _get_sound_path() -> str:
     if getattr(sys, "frozen", False):
@@ -54,11 +55,12 @@ def play_sound():
             
         elif os_name == "Darwin":
             import subprocess
-            subprocess.run(["afplay", path], timeout=10)
+            subprocess.run(["afplay", path], timeout=10, check=False)
             
         elif os_name == "Linux":
             import subprocess
-            subprocess.run(["aplay", path], timeout=10, capture_output=True)
+            subprocess.run(["aplay", path], timeout=10, capture_output=True, check=False)
         
-    except Exception as e:
+    # Broad on purpose: sound is best-effort; must not crash the sound thread
+    except Exception as e:  # noqa: BLE001
         print(f"[WARN] Sound playback failed: {e}")

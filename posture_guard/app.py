@@ -4,20 +4,20 @@ Runs the detection loop; UI is headless unless DEBUG=1.
 """
 import sys
 import time
+
 import cv2
 import mediapipe as mp
-from mediapipe.tasks.python import vision
 from mediapipe.tasks import python
+from mediapipe.tasks.python import vision
 
-from posture_guard import __version__
+from posture_guard import __version__, settings
 from posture_guard import config as cfg
-from posture_guard import settings
 from posture_guard.calibration import run_calibration
 from posture_guard.detector import check_posture, draw_debug_overlay, reset_history
+from posture_guard.extreme_alert import trigger as extreme_trigger
 from posture_guard.notifier import notify
 from posture_guard.tray import TrayIcon
 from posture_guard.ui import settings_ui
-from posture_guard.extreme_alert import trigger as extreme_trigger
 
 
 def _build_landmarker():
@@ -130,13 +130,15 @@ def main():
                     tray.set_bad()
                     if bad_start is None:
                         bad_start = now
-                    elif (now - bad_start) >= bad_duration:
-                        if (now - last_alert_time) >= alert_cooldown:
-                            notify("PostureGuard ⚠️", reason, tray=tray._icon, play_sound=extreme_enabled and extreme_sound)
-                            print(f"[ALERT] {reason}")
-                            last_alert_time = now
-                            if extreme_flash:
-                                extreme_trigger(sound=False, flash=True)
+                    elif (
+                        (now - bad_start) >= bad_duration
+                        and (now - last_alert_time) >= alert_cooldown
+                    ):
+                        notify("PostureGuard ⚠️", reason, tray=tray._icon, play_sound=extreme_enabled and extreme_sound)
+                        print(f"[ALERT] {reason}")
+                        last_alert_time = now
+                        if extreme_flash:
+                            extreme_trigger(sound=False, flash=True)
                 else:
                     tray.set_good()
                     bad_start = None

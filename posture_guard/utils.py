@@ -1,5 +1,6 @@
-import sys
 import os
+import sys
+
 
 def get_resource_path(filename: str) -> str:
     if hasattr(sys, "_MEIPASS"):

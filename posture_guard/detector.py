@@ -3,9 +3,11 @@ Posture detection logic.
 All checks are delta-based against a calibrated baseline.
 Uses a rolling smoothing window to reduce jitter and catch subtle slouches.
 """
-import numpy as np
-import cv2
 from collections import deque
+
+import cv2
+import numpy as np
+
 from . import config as cfg
 from . import settings
 

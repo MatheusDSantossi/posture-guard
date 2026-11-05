@@ -63,8 +63,9 @@ class TrayIcon:
         if self._icon:
             try:
                 self._icon.notify(message, title)
-            except Exception:
-                pass
+            # Broad on purpose: a failed tray balloon must not crash the caller
+            except Exception as e:  # noqa: BLE001
+                print(f"[WARN] Tray notification failed: {e}")
     def _set_color(self, color: tuple):
         if self._icon:
             self._icon.icon = _make_icon(color)

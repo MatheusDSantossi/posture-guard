@@ -6,6 +6,7 @@ Screen flash uses a temporary fullscreen tkinter window.
 import platform
 import threading
 
+
 def trigger(sound: bool = True, flash: bool = True):
     """Fire extreme alert in a background thread so it never blocks detection."""
     if sound:
@@ -23,16 +24,17 @@ def _play_sound():
             
         elif os_name == "Darwin":
             import subprocess
-            subprocess.run(["afplay", "/System/Library/Sounds/Basso.aiff"], timeout=5)
+            subprocess.run(["afplay", "/System/Library/Sounds/Basso.aiff"], timeout=5, check=False)
             
         elif os_name == "Linux":
             import subprocess
             # Most Linux distros have this; falls back silently if not
             subprocess.run(
                 ["aplay", "/usr/share/sounds/alsa/Front_Left.wav"],
-                timeout=5, capture_output=True,
+                timeout=5, capture_output=True, check=False,
             )
-    except Exception as e:
+    # Broad on purpose: sound is best-effort; must not crash the alert thread
+    except Exception as e:  # noqa: BLE001
         print(f"[WARN] Sound alert failed: {e}")
 
 def _flash_screen():
@@ -51,5 +53,6 @@ def _flash_screen():
         root.after(400, root.destroy)
         root.mainloop()
         
-    except Exception as e:
+    # Broad on purpose: tkinter can fail in many ways (no display, Tcl errors); flash is best-effort
+    except Exception as e:  # noqa: BLE001
         print(f"[WARN] Flash alert failed: {e}")        

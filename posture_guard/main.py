@@ -4,8 +4,8 @@ Kept separate from main.py so the spec file has a clean top-level target.
 When running from a bundled .exe, sys._MEIPASS holds the temp extraction path
 where PyInstaller unpacks data files — we use that to locate the model.
 """
-import sys
 import os
+import sys
 
 # when frozen by PyInstaller, data files land in sys._MEIPASS
 if getattr(sys, "frozen", False):
@@ -23,6 +23,6 @@ else:
 os.environ.setdefault("PG_MODEL_PATH", os.path.join(_base, "pose_landmarker_full.task"))
 # os.environ.setdefault("PG_MODEL_PATH", os.path.json(_base, "pose_landmarker_full.task"))
 
-from posture_guard.app import main # noqa: E402
+from posture_guard.app import main
 
 main()

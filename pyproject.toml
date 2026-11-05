@@ -4,7 +4,7 @@ version = "0.3.3"
 description = "Real-time posture monitoring that runs in the background"
 readme = "README.md"
 license = { file = "LICENSE"}
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dependencies = [
     "opencv-python>=4.8.0",
     "mediapipe>=0.10.0",
@@ -20,7 +20,9 @@ posture-guard = "posture_guard.main:main"
 [project.optional-dependencies]
 windows = ["win10toast"]
 dev = ["pyinstaller>=6.0"]
-test = ["pytest>=8.0", "ruff>=0.6.0"]
+# ruff is pinned exactly: its default rule set changes between releases,
+# so an unpinned version makes CI results change without any code change
+test = ["pytest>=8.0", "ruff==0.17.3"]
 
 [tool.setuptools.packages.find]
 where = ["."]

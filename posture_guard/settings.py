@@ -4,6 +4,7 @@ Provides defaults and a clean API to read/write individual keys.
 """
 import json
 import os
+
 from posture_guard.utils import get_resource_path
 
 _SETTINGS_FILE = os.path.join(os.path.dirname(get_resource_path(".")), "posture_guard_settings.json")
@@ -24,23 +25,32 @@ SENSITIVITY_MULTIPLIERS = {
     "high":   0.6,   # easier to trigger — catches subtle posture changes
 }
 
+_load_warned = False
+
 def load() -> dict:
+    global _load_warned
     if os.path.exists(_SETTINGS_FILE):
         try:
             with open(_SETTINGS_FILE, "r") as f:
                 data = json.load(f)
             # Fill in any missing keys from defaults (handles upgrades)
             return {**DEFAULTS, **data}
-        except Exception:
-            pass
-        
+        # Broad on purpose: any unreadable/corrupt file (OSError, JSONDecodeError,
+        # TypeError from a non-dict payload) must fall back to defaults
+        except Exception as e:  # noqa: BLE001
+            # load() runs every frame, so warn once instead of flooding the log
+            if not _load_warned:
+                print(f"[WARN] Could not read settings, using defaults: {e}")
+                _load_warned = True
+
     return dict(DEFAULTS)
 
 def save(settings: dict): 
     try:
         with open(_SETTINGS_FILE, "w") as f:
             json.dump(settings, f, indent=2)
-    except Exception as e:
+    # Broad on purpose: a failed save must not crash the settings window
+    except Exception as e:  # noqa: BLE001
         print(f"[WARN] Could not save settings: {e}")
 
 def get(key: str):
