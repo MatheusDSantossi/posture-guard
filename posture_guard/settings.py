@@ -4,6 +4,7 @@ Provides defaults and a clean API to read/write individual keys.
 """
 import json
 import os
+
 from posture_guard.utils import get_resource_path
 
 _SETTINGS_FILE = os.path.join(os.path.dirname(get_resource_path(".")), "posture_guard_settings.json")

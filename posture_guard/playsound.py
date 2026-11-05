@@ -5,9 +5,10 @@ Resolves the asset path whether running from source or a PyInstaller bundle.
 Randomly picks one audio file from the assets/audio folder to play as the alert.
 """
 import os
-import sys
-import random
 import platform
+import random
+import sys
+
 
 def _get_sound_path() -> str:
     if getattr(sys, "frozen", False):

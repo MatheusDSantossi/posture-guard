@@ -3,7 +3,9 @@ Central configuration — all tuneable constants live here.
 Users can override via environment variables.
 """
 import os
+
 from posture_guard.utils import get_resource_path
+
 
 def _float(key, default): return float(os.environ.get(key, default))
 

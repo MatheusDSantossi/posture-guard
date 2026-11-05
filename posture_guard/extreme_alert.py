@@ -6,6 +6,7 @@ Screen flash uses a temporary fullscreen tkinter window.
 import platform
 import threading
 
+
 def trigger(sound: bool = True, flash: bool = True):
     """Fire extreme alert in a background thread so it never blocks detection."""
     if sound:

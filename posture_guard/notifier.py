@@ -129,7 +129,7 @@ def _notify_linux(title: str, message: str, play_sound: bool):
     try:
         subprocess.run(["notify-send", title, message], check=False, timeout=5)
     except FileNotFoundError:
-        print(f"[NOTIFY] notify-send not found. Install libnotify-bin.")
+        print("[NOTIFY] notify-send not found. Install libnotify-bin.")
         print(f"[NOTIFY] {title}: {message}")
     except Exception as e:
         print(f"[NOTIFY] Linux notification failed: {e}")

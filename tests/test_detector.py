@@ -3,7 +3,9 @@ Unit tests for the pure geometry helpers in detector.py.
 These don't touch the camera, MediaPipe, or settings I/O — just math.
 """
 import math
+
 from posture_guard.detector import _angle_from_horizontal, pt_mid
+
 
 def test_angle_from_horizontal_level_line_is_zero():
     p1 = (0.0, 100.0)
